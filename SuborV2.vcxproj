@@ -142,14 +142,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="coro_w32.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\coro_w32.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="arguments.hpp" />
-    <ClInclude Include="cartdata.hpp" />
-    <ClInclude Include="coro.hpp" />
-    <ClInclude Include="load_file.hpp" />
+    <ClInclude Include="src\arguments.hpp" />
+    <ClInclude Include="src\cartdata.hpp" />
+    <ClInclude Include="src\coro.hpp" />
+    <ClInclude Include="src\load_file.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
