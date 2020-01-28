@@ -4,14 +4,16 @@
 #include <fstream>
 #include <cstddef>
 
-auto load_file(std::filesystem::path pfile)
-	-> std::vector<std::byte>
+#include "types.hpp"
+
+[[nodiscard]] inline auto load_file(std::filesystem::path pfile)
+	-> std::vector<xxx::byte>
 {
 	using namespace std::filesystem;
 	const auto length = file_size(pfile);
 	if (length < 1u)
 		return {};
-	std::vector<std::byte> bin { length };
+	std::vector<xxx::byte> bin ( length );
 	std::ifstream rdfl;
 	rdfl.exceptions(rdfl.badbit|rdfl.failbit|rdfl.eofbit);
 	rdfl.open(pfile, std::ios::binary);

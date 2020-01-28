@@ -21,6 +21,9 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\cartdata.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\arguments.hpp">
@@ -34,6 +37,9 @@
     </ClInclude>
     <ClInclude Include="src\load_file.hpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\types.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

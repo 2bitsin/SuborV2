@@ -142,6 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\cartdata.cpp" />
     <ClCompile Include="src\coro_w32.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
@@ -150,6 +151,7 @@
     <ClInclude Include="src\cartdata.hpp" />
     <ClInclude Include="src\coro.hpp" />
     <ClInclude Include="src\load_file.hpp" />
+    <ClInclude Include="src\types.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
