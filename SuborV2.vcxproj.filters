@@ -15,30 +15,36 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\coro_w32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\cartdata.cpp">
+    <ClCompile Include="src\etc\coro_w32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cart\cartdata.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\arguments.hpp">
+    <ClInclude Include="src\etc\coro.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\cartdata.hpp">
+    <ClInclude Include="src\etc\arguments.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\coro.hpp">
+    <ClInclude Include="src\etc\load_file.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\load_file.hpp">
+    <ClInclude Include="src\etc\md5.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\etc\types.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cart\cartdata.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\types.hpp">
+    <ClInclude Include="src\core\core.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

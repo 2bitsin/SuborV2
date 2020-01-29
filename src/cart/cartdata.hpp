@@ -3,8 +3,7 @@
 #include <filesystem>
 #include <any>
 #include <nonstd/span.hpp>
-
-#include "load_file.hpp"
+#include <etc/load_file.hpp>
 
 struct cartdata
 {
@@ -13,7 +12,7 @@ struct cartdata
 	template <typename type_>
 	using span_type = nonstd::span<type_>;
 
-	enum vram_org_type
+	enum class vram_org_type
 	{
 		vram_1k,
 		vram_2k_hori,
@@ -21,7 +20,7 @@ struct cartdata
 		vram_4k
 	};
 
-	enum region_type
+	enum class region_type
 	{
 		region_ntsc,
 		region_pal,
@@ -34,8 +33,7 @@ struct cartdata
 
 private:
 	
-	template <typename _Header_callback>
-	void _parse_header (_Header_callback&& hdrcall, span_type<const xxx::byte> header);
+	void _parse (span_type<const xxx::byte> inesrom);
 
 ///////////////////////////////
 	std::any cart_data_lock;	// ROM data ptr
@@ -44,13 +42,11 @@ private:
 	vram_org_type	vram_org;		// VRAM mirroring
 	region_type	region;				// Region
 
-	xxx::word	prg_ram_length;	// PRG RAM size
-	xxx::word	bat_ram_length;	// Battery backed ram length
+	xxx::word	prg_ram_size;	// PRG RAM size
+	xxx::word chr_ram_size; // CHR RAM size
 
 	span_type<const xxx::byte> chr_rom_data;  // CHR ROM 
 	span_type<const xxx::byte> prg_rom_data;  // PRG ROM 
 	span_type<const xxx::byte> trn_rom_data;  // Trainer ROM 
 
-	xxx::qword lo_hash;	// Hash Low
-	xxx::qword hi_hash;	// Hash High
 };
