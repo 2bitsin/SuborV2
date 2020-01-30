@@ -148,5 +148,18 @@ namespace bits
 		return splice_mask<_Mask>(dst, type(src) << _Offset);
 	}
 
+	template <auto _Mask, typename _ValueA, typename _ValueB>
+	constexpr auto splice_mask_inplace(_ValueA& dst, _ValueB&& src)
+	{
+		return dst = (dst & ~_Mask)|(src & _Mask);
+	}
+
+	template <auto _Offset, auto _Size, typename _ValueA, typename _ValueB>
+	constexpr auto splice_inplace(_ValueA&& dst, _ValueB&& src)
+	{		
+		constexpr auto _Mask = __bits_hidden__::mask<_Offset, _Size>();
+		using type = decltype(_Mask);
+		return splice_mask_inplace<_Mask>(dst, type(src) << _Offset);
+	}
 
 }

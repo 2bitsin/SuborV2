@@ -7,9 +7,6 @@
 
 #include <vector>
 
-// leftrotate function definition
-#define LEFTROTATE(x, c) 
-
 
 struct MDfive
 {
