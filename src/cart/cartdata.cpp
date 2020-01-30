@@ -1553,20 +1553,32 @@ namespace
 	};
 }
 
+using vector_of_byte = std::vector<xxx::byte>;
 
 void cartdata::load_ines (file_path_type pfile)
 {
-	using bin_t = std::vector<xxx::byte>;
-	cart_data_lock = load_file (pfile);
-	auto& binary = std::any_cast<bin_t&> (cart_data_lock);
-	_parse({ binary.data(), binary.data() + binary.size() });
+	load_vect (load_file(pfile));
+}
+
+void cartdata::load_vect (std::vector<xxx::byte> buff)
+{
+	cart_data_lock = std::move (buff);
+	auto& binary = std::any_cast<vector_of_byte&> (cart_data_lock);
+	_parse (binary);
 }
 
 void cartdata::load_test ()
 {
 	cart_data_lock.reset();
-	_parse(_test_rom);
+	_parse(trn_rom_data);	
 }
+
+void cartdata::load_span (span_type<const xxx::byte> buff)
+{
+	cart_data_lock.reset();
+	_parse(buff);
+}
+
 
 void cartdata::_parse (span_type<const xxx::byte> inesrom)
 {

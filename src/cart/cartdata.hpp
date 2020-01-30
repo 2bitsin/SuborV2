@@ -30,6 +30,8 @@ struct cartdata
 
 	void load_ines (file_path_type pfile);
 	void load_test ();
+	void load_span (span_type<const xxx::byte> buff);
+	void load_vect (std::vector<xxx::byte> buff);
 
 private:
 	
