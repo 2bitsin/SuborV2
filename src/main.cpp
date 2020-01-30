@@ -1,10 +1,10 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 
-#include <etc/coro.hpp>
-#include <etc/arguments.hpp>
-#include <cart/cartdata.hpp>
-#include <core/core.hpp>
+#include <src/etc/coro.hpp>
+#include <src/etc/arguments.hpp>
+#include <src/cart/cartdata.hpp>
+#include <src/core/core.hpp>
 
 #include <iostream>
 
