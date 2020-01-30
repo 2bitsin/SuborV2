@@ -47,7 +47,42 @@ struct core
 	auto Irq (xxx::byte val) { if (val) regs_[7u] |= 0x02u; else regs_[7u] &= ~0x02; }
 	auto Rst (xxx::byte val) { if (val) regs_[7u] |= 0x04u; else regs_[7u] &= ~0x04; }
 
+	auto clock_ticks_elapsed () const { return clks_; }
+
+	auto peek (xxx::word addr) -> xxx::byte 
+	{
+		xxx::byte t;
+		peek(addr, t);
+		return t;
+	}
+
+	auto peek (xxx::word addr, xxx::byte& data)
+	{
+		host_.peek(addr, data);
+		host_.tick();
+	}
+
+	auto poke (xxx::word addr, xxx::byte data)
+	{
+		host_.poke(addr, data);
+		host_.tick();
+	}
+
+		
+	template <typename _Stop_condition>
+	void execute(_Stop_condition&& stop_cond)
+	{
+		while(!stop_cond())
+		{
+			
+		}
+	}
+
 private:
-	_Host&		host_;
-	xxx::byte regs_ [8u] { 0u };
+	_Host&      host_;
+	xxx::byte   regs_ [8u] { 0u };
+	xxx::qword  clks_ { 0ull };
+
+	xxx::byte		dma_addr_;
+	xxx::byte		dma_tick_;
 };

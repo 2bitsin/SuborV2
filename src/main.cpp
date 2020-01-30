@@ -17,10 +17,9 @@ try
 
 	cartdata cd;
 
-	//cd.load_test();
-	cd.load_ines("smb.nes");
-
 	core<cartdata> sixtyfiveohtwo { cd } ;
+	
+
 	return 0;
 }
 catch(const std::exception& ex)

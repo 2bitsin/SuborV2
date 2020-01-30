@@ -155,7 +155,7 @@ namespace bits
 	}
 
 	template <auto _Offset, auto _Size, typename _ValueA, typename _ValueB>
-	constexpr auto splice_inplace(_ValueA&& dst, _ValueB&& src)
+	constexpr auto splice_inplace(_ValueA& dst, _ValueB&& src)
 	{		
 		constexpr auto _Mask = __bits_hidden__::mask<_Offset, _Size>();
 		using type = decltype(_Mask);
