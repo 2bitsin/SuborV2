@@ -2,8 +2,6 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs/SuborV2/v16
-/x64/Debug
-/bin/Debug/x64
-/obj/Debug/x64/SuborV2.tlog
-/obj/Debug/x64
+/.vs
+/bin
+/obj
