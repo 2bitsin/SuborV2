@@ -21,10 +21,6 @@ try
 	cd.load_ines("smb.nes");
 
 	core<cartdata> sixtyfiveohtwo { cd } ;
-
-	sixtyfiveohtwo._N(1);
-	sixtyfiveohtwo._B(1);
-	sixtyfiveohtwo._C(1);
 	return 0;
 }
 catch(const std::exception& ex)
