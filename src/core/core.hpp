@@ -15,18 +15,18 @@ struct core
 	auto pcl () const -> xxx::word { return regs_ [4]; }
 	auto pch () const -> xxx::word { return regs_ [5]; }
 	auto p   () const -> xxx::word { return regs_ [6]; }
-	auto pc  () const -> xxx::word { return bits::pack<8, 8> (pcl (), pch ()); }
-	auto c   () const -> xxx::byte { return bits::extract_bit<0u> (p ()) ; }
-	auto z   () const -> xxx::byte { return bits::extract_bit<1u> (p ()) ; }
-	auto i   () const -> xxx::byte { return bits::extract_bit<2u> (p ()) ; }
-	auto d   () const -> xxx::byte { return bits::extract_bit<3u> (p ()) ; }
-	auto b   () const -> xxx::byte { return bits::extract_bit<4u> (p ()) ; }
-	auto e   () const -> xxx::byte { return bits::extract_bit<5u> (p ()) ; }
-	auto v   () const -> xxx::byte { return bits::extract_bit<6u> (p ()) ; }
-	auto n   () const -> xxx::byte { return bits::extract_bit<7u> (p ()) ; }
-	auto nmi () const -> xxx::byte { return bits::extract_bit<0u> (regs_ [7u]); }
-	auto irq () const -> xxx::byte { return bits::extract_bit<1u> (regs_ [7u]); }
-	auto rst () const -> xxx::byte { return bits::extract_bit<2u> (regs_ [7u]); }
+	auto pc  () const -> xxx::word { return bits::pack<8, 8> (regs_ [4u], regs_ [5u]); }
+	auto c   () const -> xxx::byte { return bits::extract_bit<0u> (regs_ [6u]) ; }
+	auto z   () const -> xxx::byte { return bits::extract_bit<1u> (regs_ [6u]) ; }
+	auto i   () const -> xxx::byte { return bits::extract_bit<2u> (regs_ [6u]) ; }
+	auto d   () const -> xxx::byte { return bits::extract_bit<3u> (regs_ [6u]) ; }
+	auto b   () const -> xxx::byte { return bits::extract_bit<4u> (regs_ [6u]) ; }
+	auto e   () const -> xxx::byte { return bits::extract_bit<5u> (regs_ [6u]) ; }
+	auto v   () const -> xxx::byte { return bits::extract_bit<6u> (regs_ [6u]) ; }
+	auto n   () const -> xxx::byte { return bits::extract_bit<7u> (regs_ [6u]) ; }
+	auto Nmi () const -> xxx::byte { return bits::extract_bit<0u> (regs_ [7u]); }
+	auto Irq () const -> xxx::byte { return bits::extract_bit<1u> (regs_ [7u]); }
+	auto Rst () const -> xxx::byte { return bits::extract_bit<2u> (regs_ [7u]); }
 
 	auto a   (xxx::byte val) { regs_ [0] = val; }
 	auto y   (xxx::byte val) { regs_ [1] = val; }
@@ -36,37 +36,24 @@ struct core
 	auto pch (xxx::byte val) { regs_ [5] = val; }
 	auto p   (xxx::byte val) { regs_ [6] = val; }
 	auto pc  (xxx::word val) { std::tie(regs_ [4u], regs_ [5u]) = bits::unpack_as_tuple<8u, 8u> (val); }	
-	auto c   (xxx::byte val) { p (bits::splice_bit<0u> (p (), val)); }
-	auto z   (xxx::byte val) { p (bits::splice_bit<1u> (p (), val)); }
-	auto i   (xxx::byte val) { p (bits::splice_bit<2u> (p (), val)); }
-	auto d   (xxx::byte val) { p (bits::splice_bit<3u> (p (), val)); }
-	auto b   (xxx::byte val) { p (bits::splice_bit<4u> (p (), val)); }
-	auto e   (xxx::byte val) { p (bits::splice_bit<5u> (p (), val)); }
-	auto v   (xxx::byte val) { p (bits::splice_bit<6u> (p (), val)); }
-	auto n   (xxx::byte val) { p (bits::splice_bit<7u> (p (), val)); }	
-	auto nmi (xxx::byte val) { bits::splice_bit_inplace<0u> (regs_ [7u], val); }
-	auto irq (xxx::byte val) { bits::splice_bit_inplace<1u> (regs_ [7u], val); }
-	auto rst (xxx::byte val) { bits::splice_bit_inplace<2u> (regs_ [7u], val); }
+	auto c   (xxx::byte val) { bits::splice_bit_inplace<0u> (regs_ [6u], val); }
+	auto z   (xxx::byte val) { bits::splice_bit_inplace<1u> (regs_ [6u], val); }
+	auto i   (xxx::byte val) { bits::splice_bit_inplace<2u> (regs_ [6u], val); }
+	auto d   (xxx::byte val) { bits::splice_bit_inplace<3u> (regs_ [6u], val); }
+	auto b   (xxx::byte val) { bits::splice_bit_inplace<4u> (regs_ [6u], val); }
+	auto e   (xxx::byte val) { bits::splice_bit_inplace<5u> (regs_ [6u], val); }
+	auto v   (xxx::byte val) { bits::splice_bit_inplace<6u> (regs_ [6u], val); }
+	auto n   (xxx::byte val) { bits::splice_bit_inplace<7u> (regs_ [6u], val); }	
+	auto Nmi (xxx::byte val) { return bits::exchange_bit_inplace<0u> (regs_ [7u], val); }
+	auto Irq (xxx::byte val) { return bits::exchange_bit_inplace<1u> (regs_ [7u], val); }
+	auto Rst (xxx::byte val) { return bits::exchange_bit_inplace<2u> (regs_ [7u], val); }
 
 	auto clock_ticks_elapsed () const { return clks_; }
-
-	auto peek (xxx::word addr) -> xxx::byte 
-	{
-		xxx::byte t;
-		peek(addr, t);
-		return t;
-	}
 
 	auto tick (int value)
 	{
 		clks_ += value;
 		host_.tick(value);
-	}
-
-	auto peek (xxx::word addr, xxx::byte& data)
-	{
-		host_.peek(addr, data);
-		tick(1u);
 	}
 
 	auto poke (xxx::word addr, xxx::byte data)
@@ -75,6 +62,19 @@ struct core
 		tick(1u);
 	}
 			
+	auto peek (xxx::word addr, xxx::byte& data)
+	{
+		host_.peek(addr, data);
+		tick(1u);
+	}
+
+	auto peek (xxx::word addr) -> xxx::byte 
+	{
+		xxx::byte t;
+		peek(addr, t);
+		return t;
+	}
+
 	void exec()
 	{
 		using namespace xxx;
@@ -84,14 +84,23 @@ struct core
 
 		while(!host_.halt())
 		{
-			peek(pc(), instr);
+			static constexpr auto Instr_BRK = 0x000u;
+			static constexpr auto Instr_IRQ = 0x100u;	
+			static constexpr auto Instr_NMI = 0x101u;	
+			static constexpr auto Instr_RST = 0x102u;	
 
-			/*
-				if (dma)  { .... }
-				else
-			*/
-			
-
+			if (false /* DMA ? */);
+			else if (Rst (0))
+				instr = Instr_RST;
+			else if (Nmi (0))
+				instr = Instr_NMI;
+			else if (Irq() && !i ())
+				instr = Instr_IRQ;
+			else
+			{
+				peek(pc (), instr);
+				pc(pc () + 1u);
+			}
 		}
 	}
 

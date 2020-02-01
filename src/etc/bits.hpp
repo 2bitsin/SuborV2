@@ -180,4 +180,12 @@ namespace bits
 		return splice_inplace<_Offset, 1u>(dst, src);
 	}
 
+	template <auto _Offset, typename _ValueA, typename _ValueB>
+	constexpr auto exchange_bit_inplace(_ValueA& dst, _ValueB src)
+	{
+		auto last = extract_bit<_Offset>(dst);
+		splice_bit_inplace<_Offset>(dst, src);
+		return last;
+	}
+
 }

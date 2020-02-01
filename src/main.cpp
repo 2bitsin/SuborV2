@@ -17,7 +17,7 @@ try
 
 	cartdata cd;
 
-	core<cartdata> ricoh { cd } ;
+	core<cartdata> ricore { cd } ;
 
 	return 0;
 }
