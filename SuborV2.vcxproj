@@ -163,10 +163,14 @@
     <ClInclude Include="src\data\nestest.hpp" />
     <ClInclude Include="src\etc\arguments.hpp" />
     <ClInclude Include="src\cart\cartdata.hpp" />
+    <ClInclude Include="src\etc\bits.hpp" />
     <ClInclude Include="src\etc\coro.hpp" />
     <ClInclude Include="src\etc\load_file.hpp" />
     <ClInclude Include="src\etc\md5.hpp" />
     <ClInclude Include="src\etc\types.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\tests\core.t" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

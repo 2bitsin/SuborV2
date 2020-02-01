@@ -17,8 +17,7 @@ try
 
 	cartdata cd;
 
-	core<cartdata> sixtyfiveohtwo { cd } ;
-	
+	core<cartdata> ricoh { cd } ;
 
 	return 0;
 }

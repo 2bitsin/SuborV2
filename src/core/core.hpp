@@ -1,51 +1,52 @@
 #pragma once
 
 #include <src/etc/types.hpp>
+#include <src/etc/bits.hpp>
 
 template <typename _Host>
 struct core
 {
 	core(_Host& host): host_ (host) {}
 
-	auto A   () const -> xxx::word { return regs_ [0]; }
-	auto Y   () const -> xxx::word { return regs_ [1]; }
-	auto X   () const -> xxx::word { return regs_ [2]; }
-	auto S   () const -> xxx::word { return regs_ [3]; }							 
-	auto PCL () const -> xxx::word { return regs_ [4]; }
-	auto PCH () const -> xxx::word { return regs_ [5]; }
-	auto P   () const -> xxx::word { return regs_ [6]; }
-	auto PC  () const -> xxx::word { return xxx::word (regs_ [5] * 0x100u + regs_[4]); }
-	auto C   () const -> xxx::byte { return (P () >> 0u) & 1u ; }
-	auto Z   () const -> xxx::byte { return (P () >> 1u) & 1u ; }
-	auto I   () const -> xxx::byte { return (P () >> 2u) & 1u ; }
-	auto D   () const -> xxx::byte { return (P () >> 3u) & 1u ; }
-	auto B   () const -> xxx::byte { return (P () >> 4u) & 1u ; }
-	auto E   () const -> xxx::byte { return (P () >> 7u) & 1u ; }
-	auto V   () const -> xxx::byte { return (P () >> 8u) & 1u ; }
-	auto N   () const -> xxx::byte { return (P () >> 7u) & 1u ; }
-	auto Nmi () const -> xxx::byte { return (regs_[7u] >> 0u) & 1u; }
-	auto Irq () const -> xxx::byte { return (regs_[7u] >> 1u) & 1u; }
-	auto Rst () const -> xxx::byte { return (regs_[7u] >> 2u) & 1u; }
+	auto a   () const -> xxx::word { return regs_ [0]; }
+	auto y   () const -> xxx::word { return regs_ [1]; }
+	auto x   () const -> xxx::word { return regs_ [2]; }
+	auto s   () const -> xxx::word { return regs_ [3]; }							 
+	auto pcl () const -> xxx::word { return regs_ [4]; }
+	auto pch () const -> xxx::word { return regs_ [5]; }
+	auto p   () const -> xxx::word { return regs_ [6]; }
+	auto pc  () const -> xxx::word { return bits::pack<8, 8> (pcl (), pch ()); }
+	auto c   () const -> xxx::byte { return bits::extract_bit<0u> (p ()) ; }
+	auto z   () const -> xxx::byte { return bits::extract_bit<1u> (p ()) ; }
+	auto i   () const -> xxx::byte { return bits::extract_bit<2u> (p ()) ; }
+	auto d   () const -> xxx::byte { return bits::extract_bit<3u> (p ()) ; }
+	auto b   () const -> xxx::byte { return bits::extract_bit<4u> (p ()) ; }
+	auto e   () const -> xxx::byte { return bits::extract_bit<5u> (p ()) ; }
+	auto v   () const -> xxx::byte { return bits::extract_bit<6u> (p ()) ; }
+	auto n   () const -> xxx::byte { return bits::extract_bit<7u> (p ()) ; }
+	auto nmi () const -> xxx::byte { return bits::extract_bit<0u> (regs_ [7u]); }
+	auto irq () const -> xxx::byte { return bits::extract_bit<1u> (regs_ [7u]); }
+	auto rst () const -> xxx::byte { return bits::extract_bit<2u> (regs_ [7u]); }
 
-	auto A   (xxx::byte val) { regs_ [0] = val; }
-	auto Y   (xxx::byte val) { regs_ [1] = val; }
-	auto X   (xxx::byte val) { regs_ [2] = val; }
-	auto S   (xxx::byte val) { regs_ [3] = val; }					  
-	auto PCL (xxx::byte val) { regs_ [4] = val; }
-	auto PCH (xxx::byte val) { regs_ [5] = val; }
-	auto P   (xxx::byte val) { regs_ [6] = val; }
-	auto PC  (xxx::word val) { regs_ [4] = (val >> 0u) & 0xffu; regs_ [5] = (val >> 8u) & 0xffu; }	
-	auto C   (xxx::byte val) { P ((P() & ~0x01u) | ((!!val) << 0u)); }
-	auto Z   (xxx::byte val) { P ((P() & ~0x02u) | ((!!val) << 1u)); }
-	auto I   (xxx::byte val) { P ((P() & ~0x04u) | ((!!val) << 2u)); }
-	auto D   (xxx::byte val) { P ((P() & ~0x08u) | ((!!val) << 3u)); }
-	auto B   (xxx::byte val) { P ((P() & ~0x10u) | ((!!val) << 4u)); }
-	auto E   (xxx::byte val) { P ((P() & ~0x20u) | ((!!val) << 5u)); }
-	auto V   (xxx::byte val) { P ((P() & ~0x40u) | ((!!val) << 6u)); }
-	auto N   (xxx::byte val) { P ((P() & ~0x80u) | ((!!val) << 7u)); }	
-	auto Nmi (xxx::byte val) { if (val) regs_[7u] |= 0x01u; else regs_[7u] &= ~0x01; }
-	auto Irq (xxx::byte val) { if (val) regs_[7u] |= 0x02u; else regs_[7u] &= ~0x02; }
-	auto Rst (xxx::byte val) { if (val) regs_[7u] |= 0x04u; else regs_[7u] &= ~0x04; }
+	auto a   (xxx::byte val) { regs_ [0] = val; }
+	auto y   (xxx::byte val) { regs_ [1] = val; }
+	auto x   (xxx::byte val) { regs_ [2] = val; }
+	auto s   (xxx::byte val) { regs_ [3] = val; }					  
+	auto pcl (xxx::byte val) { regs_ [4] = val; }
+	auto pch (xxx::byte val) { regs_ [5] = val; }
+	auto p   (xxx::byte val) { regs_ [6] = val; }
+	auto pc  (xxx::word val) { std::tie(regs_ [4u], regs_ [5u]) = bits::unpack_as_tuple<8u, 8u> (val); }	
+	auto c   (xxx::byte val) { p (bits::splice_bit<0u> (p (), val)); }
+	auto z   (xxx::byte val) { p (bits::splice_bit<1u> (p (), val)); }
+	auto i   (xxx::byte val) { p (bits::splice_bit<2u> (p (), val)); }
+	auto d   (xxx::byte val) { p (bits::splice_bit<3u> (p (), val)); }
+	auto b   (xxx::byte val) { p (bits::splice_bit<4u> (p (), val)); }
+	auto e   (xxx::byte val) { p (bits::splice_bit<5u> (p (), val)); }
+	auto v   (xxx::byte val) { p (bits::splice_bit<6u> (p (), val)); }
+	auto n   (xxx::byte val) { p (bits::splice_bit<7u> (p (), val)); }	
+	auto nmi (xxx::byte val) { bits::splice_bit_inplace<0u> (regs_ [7u], val); }
+	auto irq (xxx::byte val) { bits::splice_bit_inplace<1u> (regs_ [7u], val); }
+	auto rst (xxx::byte val) { bits::splice_bit_inplace<2u> (regs_ [7u], val); }
 
 	auto clock_ticks_elapsed () const { return clks_; }
 
@@ -56,25 +57,41 @@ struct core
 		return t;
 	}
 
+	auto tick (int value)
+	{
+		clks_ += value;
+		host_.tick(value);
+	}
+
 	auto peek (xxx::word addr, xxx::byte& data)
 	{
 		host_.peek(addr, data);
-		host_.tick();
+		tick(1u);
 	}
 
 	auto poke (xxx::word addr, xxx::byte data)
 	{
 		host_.poke(addr, data);
-		host_.tick();
+		tick(1u);
 	}
-
-		
-	template <typename _Stop_condition>
-	void execute(_Stop_condition&& stop_cond)
-	{
-		while(!stop_cond())
-		{
 			
+	void exec()
+	{
+		using namespace xxx;
+
+		auto cross { false };
+		byte instr { 0u };
+
+		while(!host_.halt())
+		{
+			peek(pc(), instr);
+
+			/*
+				if (dma)  { .... }
+				else
+			*/
+			
+
 		}
 	}
 
@@ -83,6 +100,4 @@ private:
 	xxx::byte   regs_ [8u] { 0u };
 	xxx::qword  clks_ { 0ull };
 
-	xxx::byte		dma_addr_;
-	xxx::byte		dma_tick_;
 };

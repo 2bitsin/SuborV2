@@ -46,7 +46,7 @@ namespace __bits_hidden__
 		static_assert(_Size <= 64u, "Can't pick type bigger than bigger then 64bits");
 	}
 
-	template <byte _Offset, byte _Length>
+	template <auto _Offset, auto _Length>
 	constexpr auto mask ()
 	{		
 		static_assert(_Length != 0 && _Offset+_Length <= 64u);
@@ -85,8 +85,8 @@ namespace __bits_hidden__
 			if constexpr (sizeof...(_Args) && sizeof...(_Length))
 				Unpacker<Q, _Length...>::unpack(q >> _L0, std::forward<_Args>(args)...);
 		}
-		template <typename _Color, std::size_t... _Index>
-		static constexpr auto unpack_tuple(Q q, _Color&& u, std::index_sequence<_Index...>)
+		template <typename _Value, std::size_t... _Index>
+		static constexpr auto unpack_tuple(Q q, _Value&& u, std::index_sequence<_Index...>)
 		{
 			Unpacker<Q, _L0, _Length...>::unpack(q, std::get<_Index>(u)...);
 		}
@@ -135,13 +135,13 @@ namespace bits
 	}
 
 	template <auto _Mask, typename _ValueA, typename _ValueB>
-	constexpr auto splice_mask(_ValueA&& dst, _ValueB&& src)
+	constexpr auto splice_mask(_ValueA dst, _ValueB src)
 	{
 		return (dst & ~_Mask)|(src & _Mask);
 	}
 
 	template <auto _Offset, auto _Size, typename _ValueA, typename _ValueB>
-	constexpr auto splice(_ValueA&& dst, _ValueB&& src)
+	constexpr auto splice(_ValueA dst, _ValueB src)
 	{		
 		constexpr auto _Mask = __bits_hidden__::mask<_Offset, _Size>();
 		using type = decltype(_Mask);
@@ -149,17 +149,35 @@ namespace bits
 	}
 
 	template <auto _Mask, typename _ValueA, typename _ValueB>
-	constexpr auto splice_mask_inplace(_ValueA& dst, _ValueB&& src)
+	constexpr auto splice_mask_inplace(_ValueA& dst, _ValueB src)
 	{
 		return dst = (dst & ~_Mask)|(src & _Mask);
 	}
 
 	template <auto _Offset, auto _Size, typename _ValueA, typename _ValueB>
-	constexpr auto splice_inplace(_ValueA& dst, _ValueB&& src)
+	constexpr auto splice_inplace(_ValueA& dst, _ValueB src)
 	{		
 		constexpr auto _Mask = __bits_hidden__::mask<_Offset, _Size>();
 		using type = decltype(_Mask);
 		return splice_mask_inplace<_Mask>(dst, type(src) << _Offset);
+	}
+
+	template <auto _Offset, typename _Value>
+	constexpr auto extract_bit(_Value value)
+	{
+		return extract<1u, _Offset>(value);
+	}
+
+	template <auto _Offset, typename _ValueA, typename _ValueB>
+	constexpr auto splice_bit(_ValueA dst, _ValueB src)
+	{
+		return splice<_Offset, 1u>(dst, src);
+	}
+
+	template <auto _Offset, typename _ValueA, typename _ValueB>
+	constexpr auto splice_bit_inplace(_ValueA& dst, _ValueB src)
+	{
+		return splice_inplace<_Offset, 1u>(dst, src);
 	}
 
 }
