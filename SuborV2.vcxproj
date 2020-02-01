@@ -161,6 +161,8 @@
   <ItemGroup>
     <ClInclude Include="src\core\core.hpp" />
     <ClInclude Include="src\data\nestest.hpp" />
+    <ClInclude Include="src\data\nestest_log.cpp" />
+    <ClInclude Include="src\data\nestest_log.hpp" />
     <ClInclude Include="src\etc\arguments.hpp" />
     <ClInclude Include="src\cart\cartdata.hpp" />
     <ClInclude Include="src\etc\bits.hpp" />

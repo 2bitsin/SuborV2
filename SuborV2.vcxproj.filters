@@ -53,6 +53,12 @@
     <ClInclude Include="src\etc\bits.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\data\nestest_log.cpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\data\nestest_log.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\tests\core.t" />
