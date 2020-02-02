@@ -14,6 +14,14 @@ struct core
 
 	union Word
 	{
+		Word(word wv)
+		:	w (wv)
+		{}
+
+		Word(byte lo, byte hi)
+		:	l (lo), h (hi)
+		{}
+			
 		word w;
 		struct
 		{
@@ -41,20 +49,30 @@ struct core
 	core (_Host& host): host_ (host)
 	{}
 
+	template <typename dst_type, typename src_type>
+	static auto&& xchg (dst_type&& dst, src_type&& src)
+	{
+		return std::exchange (std::forward<dst_type>(dst), std::forward<src_type>(src));
+	}
+
 	auto ticks_elapsed () const
 	{
-		return clk;
+		return clk_;
 	}
 
 	auto tick (int value)
 	{
-		clk += value;
+		clk_ += value;
 		host_.tick (value);
 	}
 
 	auto poke (word addr, byte data)
 	{
-		host_.poke (addr, data);
+		if (addr != 0x4014u)	
+			host_.poke (addr, data);
+		else
+			dma_ = true, 
+			dpg_ = data;		
 		tick (1u);
 	}
 
@@ -103,22 +121,35 @@ struct core
 			0xFFFCu,
 		};
 
+
 		while (!host_.halt ())
 		{
 			auto pgcx { false };
 			byte next { 0u };
 			Word addr { 0u };
-
-			if (false /* DMA ? */);
-			else if (Rst (0))
+			byte temp { 0u };
+			byte offs { 0u };
+			
+			if (xchg(dma_, false))
+			{
+				addr.w = 0x100u * dpg_;
+				peek (addr.w);
+				if (clk_ & 1u)
+					peek (addr.w);
+				for (offs = 0u; offs < 0x100; ++offs) {
+					peek (addr.w + offs, temp);
+					poke (0x2004u, temp);					
+				}
+			}
+			else if (xchg(rst_, false))
 				instr = Instr_RST;
-			else if (Nmi (0))
+			else if (xchg(nmi_, false))
 				instr = Instr_NMI;
-			else if (Irq () && !p.i)
+			else if (irq_ && !p.i)
 				instr = Instr_IRQ;
 			else
-			{
-			}
+				instr = peek (pc.w++);
+
 
 
 			// Operation
@@ -128,10 +159,23 @@ struct core
 
 private:
 	_Host&	host_;
+
+	/// Registers
+
 	byte		a, x, y, s;
 	Word		pc;
 	Flags   p;
-	byte		irq;
-	qword		clk { 0ull };
+
+	// Various
+
+	bool		dma_ { false	};	// DMA Trigger
+	byte		dpg_ { 0u			};  // DMA Page
+
+	qword		clk_ { 0ull		};
+
+	bool		nmi_ { false	};
+	bool		rst_ { false	};
+	bool		irq_ { false	};
+	
 
 };
