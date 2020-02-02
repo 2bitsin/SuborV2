@@ -10,14 +10,39 @@
 
 //#include "md5.hpp"
 
+
+struct fmc
+{
+	fmc(): ricore(*this) {}
+
+	bool halt() const
+	{
+		return false;
+	}
+
+	auto peek(xxx::word addr, xxx::byte& data)
+	{}
+
+	auto poke(xxx::word addr, xxx::byte data)
+	{}
+
+	auto tick(int)
+	{}
+
+	core<fmc> ricore;
+};
+
+
 int main(int argc, char** argv, char** envp)
 try
 {
 	const arguments cli{ argc, argv, envp };
 
 	cartdata cd;
+	fmc _fmc;
 
-	core<cartdata> ricore { cd } ;
+	_fmc.ricore.exec();
+
 
 	return 0;
 }
