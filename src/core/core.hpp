@@ -488,11 +488,9 @@ struct core
 			case 0xD3:
 			case 0xF1:
 			case 0xF3:
-				addr.w = peek (pc.w++);
-				temp = peek (addr.w);
-				addr.l += 1u;
-				addr.h = peek (addr.l);
-				addr.l = temp;
+				temp = peek (pc.w++);
+				addr.l = peek (temp + 0u);				
+				addr.h = peek ((temp + 1u) & 0xff);
 				temp = addr.h;
 				addr.w += y;
 				cxpg = addr.h != temp;
