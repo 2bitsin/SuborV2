@@ -8996,3 +8996,8 @@ static inline const constexpr nestest_state _test_log[]=
 	{0xC6A2, {0x00, 0xFF, 0x15, 0x27, 0xFB}, 1, {0x60, 0x00, 0x00},  26548,  79623,  170,  233, false, "RTS", nullptr},
 	{0xC66E, {0x00, 0xFF, 0x15, 0x27, 0xFD}, 1, {0x60, 0x00, 0x00},  26554,  79641,  188,  233, false, "RTS", nullptr},
 };
+
+auto nestest_log () -> nonstd::span<const nestest_state>
+{
+	return { _test_log };
+}

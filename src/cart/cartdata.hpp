@@ -34,12 +34,12 @@ struct cartdata
 	void load_vect (std::vector<xxx::byte> buff);
 
 private:
-	
 	void _parse (span_type<const xxx::byte> inesrom);
 
 ///////////////////////////////
 	std::any cart_data_lock;	// ROM data ptr
 
+public:
 	xxx::byte	chip_id;				// Mapper ID
 	vram_org_type	vram_org;		// VRAM mirroring
 	region_type	region;				// Region
@@ -50,5 +50,4 @@ private:
 	span_type<const xxx::byte> chr_rom_data;  // CHR ROM 
 	span_type<const xxx::byte> prg_rom_data;  // PRG ROM 
 	span_type<const xxx::byte> trn_rom_data;  // Trainer ROM 
-
 };

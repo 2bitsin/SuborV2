@@ -18,7 +18,7 @@ void cartdata::load_vect (std::vector<xxx::byte> buff)
 void cartdata::load_test ()
 {
 	cart_data_lock.reset();
-	_parse(trn_rom_data);	
+	_parse(_test_rom);	
 }
 
 void cartdata::load_span (span_type<const xxx::byte> buff)

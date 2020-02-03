@@ -18,11 +18,11 @@ struct core
 		{}
 
 		Word (word wv)
-			: w (wv)
+		: w (wv)
 		{}
 
 		Word (byte lo, byte hi)
-			: l (lo), h (hi)
+		: l (lo), h (hi)
 		{}
 
 		word w;
@@ -31,9 +31,12 @@ struct core
 			byte l;
 			byte h;
 		};
+
+		friend bool operator == (const Word& lhs, xxx::word rhs) { return lhs.w == rhs; }
+		friend bool operator == (xxx::word lhs, const Word& rhs) { return lhs == rhs.w; }
 	};
 
-	union Flags
+	union Flag
 	{
 		byte all;
 		struct
@@ -47,6 +50,9 @@ struct core
 			bool v : 1;
 			bool n : 1;
 		};
+
+		friend bool operator == (const Flag& lhs, byte rhs) { return lhs.all == rhs; }
+		friend bool operator == (byte lhs, const Flag& rhs) { return lhs == rhs.all; }
 	};
 
 	core (_Host& host): host_ (host)
@@ -60,12 +66,12 @@ struct core
 
 	auto ticks_elapsed () const
 	{
-		return clk_;
+		return clk;
 	}
 
 	auto tick (int value)
 	{
-		clk_ += value;
+		clk += value;
 		host_.tick (value);
 	}
 
@@ -109,7 +115,7 @@ struct core
 		uc_pull (data);
 		return data;
 	}
-
+	
 	void exec ()
 	{
 		static constexpr auto Instr_BRK = 0x000u;
@@ -138,7 +144,7 @@ struct core
 			{
 				addr.w = 0x100u * dpg_;
 				peek (addr.w);
-				if (clk_ & 1u)
+				if (ticks_elapsed() & 1u)
 					peek (addr.w);
 				for (offs = 0u; offs < 0x100; ++offs)
 				{
@@ -562,7 +568,7 @@ struct core
 			case 0xB9:
 			case 0xBD:
 				if (cxpg == true)
-					peek (addr.w, tmp0.w);
+					tmp0.w = peek (addr.w);
 				peek (addr.w, tmp0.l);
 				p.z = !!(tmp0.l == 0u);
 				p.n = !!(tmp0.l & 0x80u);
@@ -642,7 +648,7 @@ struct core
 				// BIT
 			case 0x24:
 			case 0x2C:
-				peek (addr.w, tmp0.w);
+				tmp0.w = peek (addr.w);
 				p.z = !(tmp0.l & a);
 				p.n = !!(tmp0.l & 0x80u);
 				p.v = !!(tmp0.l & 0x40u);
@@ -673,8 +679,8 @@ struct core
 			case 0xD9:
 			case 0xDD:
 				if (cxpg == true)
-					peek (addr.w, tmp0.w);
-				peek (addr.w, tmp0.w);
+					tmp0.w = peek (addr.w);
+				tmp0.w = peek (addr.w);
 				p.z = !!(a == tmp0.l);
 				p.n = !!((a - tmp0.l) & 0x80u);
 				p.c = !!(tmp0.l <= a);
@@ -728,7 +734,7 @@ struct core
 			case 0x41:
 			case 0x51:
 				if (cxpg == true)
-					peek (addr.w, tmp0.w);
+					tmp0.w = peek (addr.w);
 				peek (addr.w, tmp0.l);
 				tmp0.l = (a ^= tmp0.l);
 				p.z = !tmp0.l;
@@ -745,8 +751,8 @@ struct core
 			case 0x61:
 			case 0x71:
 				if (cxpg == true)
-					peek (addr.w, tmp0.w);
-				peek (addr.w, tmp0.w);
+					tmp0.w = peek (addr.w);
+				tmp0.w = peek (addr.w);
 				tmp1.w = tmp0.w + !!(p.c) + a;
 				p.z = !tmp1.l;
 				p.n = !!(tmp1.l & 0x80);
@@ -766,8 +772,8 @@ struct core
 			case 0xF9:
 			case 0xFD:
 				if (cxpg == true)
-					peek (addr.w, tmp0.w);
-				peek (addr.w, tmp0.w);
+					tmp0.w = peek (addr.w);
+				tmp0.w = peek (addr.w);
 				tmp1.w = a - tmp0.w - !p.c;
 				p.z = !tmp1.l;
 				p.n = !!(tmp1.l & 0x80);
@@ -988,7 +994,7 @@ struct core
 
 				// PHP
 			case 0x08:
-				tmp0.l = p.bits | BreakFlag;
+				tmp0.l = p.all | 0x10; // Set break to 1
 				poke (0x100 + s--, tmp0.l);
 				break;
 
@@ -1002,7 +1008,7 @@ struct core
 			case 0x28:
 				peek (0x100 + s, tmp0.l);
 				peek (0x100 + ++s, tmp0.l);
-				p.bits = tmp0.l;
+				p.all = tmp0.l;
 				p.b = 0;
 				p.e = 1;
 				break;
@@ -1115,9 +1121,9 @@ struct core
 			case 0xC3: // DCM (ab,X)                  8
 			case 0xD3: // DCM (ab),Y                  8
 				if (cxpg == true)
-					peek (addr.w, tmp0.w);
+					tmp0.w = peek (addr.w);
 				peek (addr.w, tmp0.l);
-				peek (addr.w, tmp0.l--);
+				tmp0.l = peek (addr.w);
 				p.z = !!(a == tmp0.l);
 				p.n = !!((a - tmp0.l) & 0x80u);
 				p.c = !!(tmp0.l <= a);
@@ -1141,10 +1147,10 @@ struct core
 			case 0xE3: // INS (ab,X)               8
 			case 0xF3: // INS (ab),Y               8
 				if (cxpg == true)
-					peek (addr.w, tmp0.w);
-				peek (addr.w, tmp0.w);
-				/* dummy */ poke (addr.w, tmp0.l++);
-				poke (addr.w, tmp0.w);
+					tmp0.w = peek (addr.w);
+				tmp0.w = peek (addr.w);
+				poke (addr.w, tmp0.l++); // Dummy write 
+				poke (addr.w, tmp0.l);
 				tmp1.w = a - tmp0.w - !p.c;
 				p.z = !tmp1.l;
 				p.n = !!(tmp1.l & 0x80);
@@ -1221,7 +1227,7 @@ struct core
 				p.c = !!(tmp0.l & 0x1u);
 				tmp0.l = (tmp0.l >> 1u) | (tmp0.h << 7u);
 				poke (addr.w, tmp0.w &= 0xff);
-				peek (addr.w, tmp0.w);
+				tmp0.w = peek (addr.w);
 				tmp1.w = tmp0.w + (!!p.c) + a;
 				p.z = !tmp1.l;
 				p.n = !!(tmp1.l & 0x80);
@@ -1231,15 +1237,15 @@ struct core
 				break;
 
 			case 0xBB:
-				if (cross)
-					tick<kDummyPeek> (m, addr.w, tmp0.l);
+				if (cxpg)
+					peek (addr.w, tmp0.l);
 				tmp0.l &= s;
 				a = tmp0.l;
 				x = tmp0.l;
 				s = tmp0.l;
 				p.z = !tmp0.l;
 				p.n = !!(tmp0.l & 0x80);
-				tick<kDummyPeek> (m, addr.w, tmp0.l);
+				peek (addr.w); // Dummy read
 				break;
 
 				// NOP
@@ -1250,7 +1256,7 @@ struct core
 			case 0xDC:
 			case 0xFC:
 				if (cxpg == true)
-					peek (addr.w, tmp0.w);
+					peek (addr.w);  // Dummy Read
 			case 0x0C:
 			case 0x04:
 			case 0x14:
@@ -1262,7 +1268,7 @@ struct core
 			case 0x80:
 			case 0xD4:
 			case 0xF4:
-				peek (addr.w, tmp0.w);
+				peek (addr.w); // Dummy Read
 			case 0x1A:
 			case 0x3A:
 			case 0x5A:
@@ -1283,22 +1289,23 @@ struct core
 private:
 	_Host& host_;
 
-	/// Registers
-
-	byte		a, x, y, s;
-	Word		pc;
-	Flags   p;
-
 	// Various
 
 	bool		dma_ { false };	// DMA Trigger
 	byte		dpg_ { 0u };  // DMA Page
 
-	qword		clk_ { 0ull };
 
 	bool		nmi_ { false };
 	bool		rst_ { false };
 	bool		irq_ { false };
 
+public:
+	qword		clk		{ 0ull };
+
+	/// Registers
+
+	byte		a, x, y, s;
+	Word		pc;
+	Flag		p;
 
 };
