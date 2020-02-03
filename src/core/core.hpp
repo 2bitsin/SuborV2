@@ -14,16 +14,17 @@ struct core
 
 	union Word
 	{
-		Word(): Word(0){}
-
-		Word(word wv)
-		:	w (wv)
+		Word (): Word (0)
 		{}
 
-		Word(byte lo, byte hi)
-		:	l (lo), h (hi)
+		Word (word wv)
+			: w (wv)
 		{}
-			
+
+		Word (byte lo, byte hi)
+			: l (lo), h (hi)
+		{}
+
 		word w;
 		struct
 		{
@@ -54,7 +55,7 @@ struct core
 	template <typename dst_type, typename src_type>
 	static auto xchg (dst_type&& dst, src_type&& src)
 	{
-		return std::exchange (std::forward<dst_type>(dst), std::forward<src_type>(src));
+		return std::exchange (std::forward<dst_type> (dst), std::forward<src_type> (src));
 	}
 
 	auto ticks_elapsed () const
@@ -70,11 +71,11 @@ struct core
 
 	auto poke (word addr, byte data)
 	{
-		if (addr != 0x4014u)	
+		if (addr != 0x4014u)
 			host_.poke (addr, data);
 		else
-			dma_ = true, 
-			dpg_ = data;		
+			dma_ = true,
+			dpg_ = data;
 		tick (1u);
 	}
 
@@ -130,21 +131,24 @@ struct core
 			Word addr { 0u };
 			byte temp { 0u };
 			byte offs { 0u };
-			
-			if (xchg(dma_, false))
+
+			Word tmp0, tmp1 ;
+
+			if (xchg (dma_, false))
 			{
 				addr.w = 0x100u * dpg_;
 				peek (addr.w);
 				if (clk_ & 1u)
 					peek (addr.w);
-				for (offs = 0u; offs < 0x100; ++offs) {
+				for (offs = 0u; offs < 0x100; ++offs)
+				{
 					peek (addr.w + offs, temp);
-					poke (0x2004u, temp);					
+					poke (0x2004u, temp);
 				}
 			}
-			else if (xchg(rst_, false))
+			else if (xchg (rst_, false))
 				next = Instr_RST;
-			else if (xchg(nmi_, false))
+			else if (xchg (nmi_, false))
 				next = Instr_NMI;
 			else if (irq_ && !p.i)
 				next = Instr_IRQ;
@@ -160,8 +164,8 @@ struct core
 				addr.w = Isrv [next & 0xFF];
 				p.b = (next == Instr_BRK);
 				p.i = (next == Instr_IRQ);
-				next = peek (pc.w);
-				next = peek (pc.w);
+				peek (pc.w); // Dummy reads
+				peek (pc.w); // Dummy reads
 				uc_push (pc.h);
 				uc_push (pc.l);
 				uc_push (p.all);
@@ -204,7 +208,7 @@ struct core
 			case 0xDA:
 			case 0xEA:
 			case 0xFA:
-				peek (pc.w);
+				peek (pc.w); // Dummy read
 				break;
 
 				// Immediate
@@ -314,17 +318,17 @@ struct core
 			case 0xF7:
 				addr.w = peek (pc.w++);
 				addr.l += x;
-				peek (addr.w);
+				peek (addr.w); // Dummy read
 				break;
 
 				// Zero Page, Y
 			case 0x96:
 			case 0x97:
-			case 0xB7:
 			case 0xB6:
+			case 0xB7:
 				addr.w = peek (pc.w++);
 				addr.l += y;
-				peek (addr.w);
+				peek (addr.w); // Dummy read
 				break;
 
 				// Absolute
@@ -396,7 +400,7 @@ struct core
 				addr.l = peek (pc.w++);
 				addr.h = peek (pc.w++);
 				temp = addr.h;
-				addr.w += x;			
+				addr.w += x;
 				cxpg = addr.h != temp;
 				break;
 
@@ -433,7 +437,7 @@ struct core
 				addr.l = peek (pc.w++);
 				addr.h = peek (pc.w++);
 				temp = peek (addr.w);
-				addr.l += 1u;				  
+				addr.l += 1u;
 				addr.h = peek (addr.w);
 				addr.l = temp;
 				break;
@@ -455,13 +459,10 @@ struct core
 			case 0xC3:
 			case 0xE1:
 			case 0xE3:
-				addr.w = peek (pc.w++);
-				addr.w += x;
-				peek (addr.w);
-				temp = peek (addr.l);
-				addr.l += 1u;
-				addr.h = peek (addr.l);
-				addr.l = temp;
+				temp = peek (pc.w++) + x;
+				peek (temp);							// Dummy read
+				addr.l = peek (temp);
+				addr.h = peek (++temp);
 				break;
 
 				// (Indirect), Y
@@ -509,14 +510,778 @@ struct core
 				break;
 			}
 
-
 			// Operation
+			switch (next)
+			{
+			case Instr_BRK:
+			case Instr_IRQ:
+			case Instr_NMI:
+			case Instr_RST:
+				break;
+
+				// JMP
+			case 0x4C:
+			case 0x6C:
+				pc = addr;
+				break;
+
+				// JSR
+			case 0x20: // Todo: double-check the order of stores/loads
+				--pc.w;
+				poke (0x100 + s, addr.l); // Dummy write
+				uc_push (pc.h);
+				uc_push (pc.l);
+				pc.w = addr.w;
+				break;
+
+				// RTS
+			case 0x60:
+				peek (0x100 + s);	// Dummy read
+				pc.l = uc_pull ();
+				pc.h = uc_pull ();
+				peek (pc.w++);
+				break;
+
+				// RTI
+			case 0x40:
+				p.all = uc_pull ();
+				p.b = false;
+				p.e = true;
+				pc.l = uc_pull ();
+				pc.h = uc_pull ();
+				peek (pc.w);			// Dummy read
+				break;
+
+				// LDA		
+			case 0xA1:
+			case 0xA5:
+			case 0xA9:
+			case 0xAD:
+			case 0xB1:
+			case 0xB5:
+			case 0xB9:
+			case 0xBD:
+				if (cxpg == true)
+					peek (addr.w, tmp0.w);
+				peek (addr.w, tmp0.l);
+				p.z = !!(tmp0.l == 0u);
+				p.n = !!(tmp0.l & 0x80u);
+				a = tmp0.l;
+				break;
+
+				// LDX
+			case 0xB6:
+			case 0xA2:
+			case 0xA6:
+			case 0xAE:
+			case 0xBE:
+				if (cxpg == true)
+					peek (addr.w, tmp0.l);
+				peek (addr.w, tmp0.l);
+				p.z = !!(tmp0.l == 0u);
+				p.n = !!(tmp0.l & 0x80u);
+				x = tmp0.l;
+				break;
+
+				// LAX
+			case 0xA7: // LAX ab            ;*=add 1     3
+			case 0xB7: // LAX ab,Y          ;if page     4
+			case 0xAF: // LAX abcd          ;No. Cycles= 4
+			case 0xBF: // LAX abcd,Y        ;            4*
+			case 0xA3: // LAX (ab,X)        ;boundary    6
+			case 0xB3: // LAX (ab),Y        ;is crossed  5*
+				if (cxpg == true)
+					peek (addr.w, tmp0.l);
+				peek (addr.w, tmp0.l);
+				p.z = !!(tmp0.l == 0u);
+				p.n = !!(tmp0.l & 0x80u);
+				x = a = tmp0.l;
+				break;
+
+				// LDY
+			case 0xB4:
+			case 0xA0:
+			case 0xA4:
+			case 0xAC:
+			case 0xBC:
+				if (cxpg == true)
+					peek (addr.w, tmp0.l);
+				peek (addr.w, tmp0.l);
+				p.z = !!(tmp0.l == 0u);
+				p.n = !!(tmp0.l & 0x80u);
+				y = tmp0.l;
+				break;
+
+
+				// STX
+			case 0x96:
+			case 0x86:
+			case 0x8E:
+				poke (addr.w, x);
+				break;
+
+				// STY
+			case 0x94:
+			case 0x84:
+			case 0x8C:
+				poke (addr.w, y);
+				break;
+
+				// STA
+			case 0x91:
+			case 0x99:
+			case 0x9D:
+				peek (addr.w, a);
+			case 0x81:
+			case 0x85:
+			case 0x8D:
+			case 0x95:
+				poke (addr.w, a);
+				break;
+
+				// BIT
+			case 0x24:
+			case 0x2C:
+				peek (addr.w, tmp0.w);
+				p.z = !(tmp0.l & a);
+				p.n = !!(tmp0.l & 0x80u);
+				p.v = !!(tmp0.l & 0x40u);
+				break;
+
+				// AND
+			case 0x21:
+			case 0x25:
+			case 0x29:
+			case 0x2D:
+			case 0x31:
+			case 0x35:
+			case 0x39:
+			case 0x3D:
+				peek (addr.w, tmp0.l);
+				tmp0.l = (a &= tmp0.l);
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// CMP
+			case 0xC1:
+			case 0xC5:
+			case 0xC9:
+			case 0xCD:
+			case 0xD1:
+			case 0xD5:
+			case 0xD9:
+			case 0xDD:
+				if (cxpg == true)
+					peek (addr.w, tmp0.w);
+				peek (addr.w, tmp0.w);
+				p.z = !!(a == tmp0.l);
+				p.n = !!((a - tmp0.l) & 0x80u);
+				p.c = !!(tmp0.l <= a);
+				break;
+
+				// CPY
+			case 0xC0:
+			case 0xC4:
+			case 0xCC:
+				peek (addr.w, tmp0.l);
+				p.z = !!(y == tmp0.l);
+				p.n = !!((y - tmp0.l) & 0x80u);
+				p.c = !!(tmp0.l <= y);
+				break;
+
+				// CPX
+			case 0xE0:
+			case 0xE4:
+			case 0xEC:
+				peek (addr.w, tmp0.l);
+				p.z = !!(x == tmp0.l);
+				p.n = !!((x - tmp0.l) & 0x80u);
+				p.c = !!(tmp0.l <= x);
+				break;
+
+
+				// ORA
+			case 0x01:
+			case 0x05:
+			case 0x09:
+			case 0x0D:
+			case 0x11:
+			case 0x15:
+			case 0x19:
+			case 0x1D:
+				if (cxpg == true)
+					peek (addr.w, tmp0.l);
+				peek (addr.w, tmp0.l);
+				tmp0.l = (a |= tmp0.l);
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// EOR
+			case 0x49:
+			case 0x45:
+			case 0x55:
+			case 0x4D:
+			case 0x5D:
+			case 0x59:
+			case 0x41:
+			case 0x51:
+				if (cxpg == true)
+					peek (addr.w, tmp0.w);
+				peek (addr.w, tmp0.l);
+				tmp0.l = (a ^= tmp0.l);
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// ADC
+			case 0x69:
+			case 0x65:
+			case 0x75:
+			case 0x6D:
+			case 0x7D:
+			case 0x79:
+			case 0x61:
+			case 0x71:
+				if (cxpg == true)
+					peek (addr.w, tmp0.w);
+				peek (addr.w, tmp0.w);
+				tmp1.w = tmp0.w + !!(p.c) + a;
+				p.z = !tmp1.l;
+				p.n = !!(tmp1.l & 0x80);
+				p.c = !!tmp1.h;
+				p.v = !!((~(a ^ tmp0.l) & (a ^ tmp1.l)) >> 7u);
+				a = tmp1.l;
+				break;
+
+				// SBC
+			case 0xE1:
+			case 0xE5:
+			case 0xE9:
+			case 0xEB:
+			case 0xED:
+			case 0xF1:
+			case 0xF5:
+			case 0xF9:
+			case 0xFD:
+				if (cxpg == true)
+					peek (addr.w, tmp0.w);
+				peek (addr.w, tmp0.w);
+				tmp1.w = a - tmp0.w - !p.c;
+				p.z = !tmp1.l;
+				p.n = !!(tmp1.l & 0x80);
+				p.c = !tmp1.h;
+				p.v = !!(((a ^ tmp0.l) & (a ^ tmp1.l)) >> 7u);
+				a = tmp1.l;
+				break;
+
+				// SEC
+			case 0x38:
+				p.c = 1;
+				break;
+
+				// SED
+			case 0xF8:
+				p.d = 1;
+				break;
+
+				// SEI
+			case 0x78:
+				p.i = 1;
+				break;
+
+				// CLC
+			case 0x18:
+				p.c = 0;
+				break;
+
+				// CLD
+			case 0xD8:
+				p.d = 0;
+				break;
+
+				// CLI
+			case 0x58:
+				p.i = 0;
+				break;
+
+				// CLV
+			case 0xB8:
+				p.v = 0;
+				break;
+
+				// DEX
+			case 0xCA:
+				tmp0.w = --x;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// DEY
+			case 0x88:
+				tmp0.w = --y;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// INX
+			case 0xE8:
+				tmp0.w = ++x;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// INY
+			case 0xC8:
+				tmp0.w = ++y;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// ASL A
+			case 0x0A:
+				(tmp0.w = a) <<= 1u;
+				a = tmp0.l;
+				p.c = !!(tmp0.w & 0x100u);
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// LSR A
+			case 0x4A:
+				p.c = !!(a & 0x1u);
+				tmp0.l = (a >>= 1u);
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// ROR A
+			case 0x6A:
+				tmp0.h = !!p.c;
+				p.c = !!(a & 0x1u);
+				tmp0.l = (a = (a >> 1u) | (tmp0.h << 7u));
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// ROL A
+			case 0x2A:
+				tmp0.h = !!p.c;
+				p.c = !!(a & 0x80u);
+				tmp0.l = (a = (a << 1u) | tmp0.h);
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// TAX
+			case 0xAA:
+				tmp0.w = x = a;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// TAY
+			case 0xA8:
+				tmp0.w = y = a;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// TXA
+			case 0x8A:
+				tmp0.w = a = x;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// TYA
+			case 0x98:
+				tmp0.w = a = y;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// TSX
+			case 0xBA:
+				tmp0.w = x = s;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// TXS
+			case 0x9A:
+				tmp0.w = s = x;
+				break;
+
+				// BCS
+			case 0xB0:
+				if (!p.c)
+					break;
+				if (pc.h != addr.h)
+					peek ((pc.l = addr.l, pc.w), tmp0.l);
+				peek (pc.w = addr.w, tmp0.l);
+				break;
+
+				// BCC
+			case 0x90:
+				if (p.c)
+					break;
+				if (pc.h != addr.h)
+					peek ((pc.l = addr.l, pc.w), tmp0.l);
+				peek (pc.w = addr.w, tmp0.l);
+				break;
+
+				// BEQ
+			case 0xF0:
+				if (!p.z)
+					break;
+				if (pc.h != addr.h)
+					peek ((pc.l = addr.l, pc.w), tmp0.l);
+				peek (pc.w = addr.w, tmp0.l);
+				break;
+
+				// BNE
+			case 0xD0:
+				if (p.z)
+					break;
+				if (pc.h != addr.h)
+					peek ((pc.l = addr.l, pc.w), tmp0.l);
+				peek (pc.w = addr.w, tmp0.l);
+				break;
+
+				// BVS
+			case 0x70:
+				if (!p.v)
+					break;
+				if (pc.h != addr.h)
+					peek ((pc.l = addr.l, pc.w), tmp0.l);
+				peek (pc.w = addr.w, tmp0.l);
+				break;
+
+				// BVC
+			case 0x50:
+				if (p.v)
+					break;
+				if (pc.h != addr.h)
+					peek ((pc.l = addr.l, pc.w), tmp0.l);
+				peek (pc.w = addr.w, tmp0.l);
+				break;
+
+				// BMI
+			case 0x30:
+				if (!p.n)
+					break;
+				if (pc.h != addr.h)
+					peek ((pc.l = addr.l, pc.w), tmp0.l);
+				peek (pc.w = addr.w, tmp0.l);
+				break;
+
+				// BPL
+			case 0x10:
+				if (p.n)
+					break;
+				if (pc.h != addr.h)
+					peek ((pc.l = addr.l, pc.w), tmp0.l);
+				peek (pc.w = addr.w, tmp0.l);
+				break;
+
+				// PHP
+			case 0x08:
+				tmp0.l = p.bits | BreakFlag;
+				poke (0x100 + s--, tmp0.l);
+				break;
+
+				// PHA
+			case 0x48:
+				tmp0.l = a;
+				poke (0x100 + s--, tmp0.l);
+				break;
+
+				// PLP
+			case 0x28:
+				peek (0x100 + s, tmp0.l);
+				peek (0x100 + ++s, tmp0.l);
+				p.bits = tmp0.l;
+				p.b = 0;
+				p.e = 1;
+				break;
+
+				// PLA
+			case 0x68:
+				peek (0x100 + s, tmp0.l);
+				peek (0x100 + ++s, tmp0.l);
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				a = tmp0.l;
+				break;
+
+				// ASL
+			case 0x1E:
+				peek (addr.w, tmp0.l);
+			case 0x06:
+			case 0x16:
+			case 0x0E:
+				peek (addr.w, tmp0.l);
+				/* dummy */ poke (addr.w, tmp0.l);
+				p.c = !!(tmp0.l & 0x80);
+				tmp0.l <<= 1u;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				poke (addr.w, tmp0.l);
+				break;
+
+				// LSR
+			case 0x5E:
+				peek (addr.w, tmp0.l);
+			case 0x46:
+			case 0x56:
+			case 0x4E:
+				peek (addr.w, tmp0.l);
+				/* dummy */ poke (addr.w, tmp0.l);
+				p.c = !!(tmp0.l & 0x1u);
+				tmp0.l >>= 1u;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				poke (addr.w, tmp0.l);
+				break;
+
+				// ROL
+			case 0x3E:
+				peek (addr.w, tmp0.l);
+			case 0x26:
+			case 0x36:
+			case 0x2E:
+				peek (addr.w, tmp0.l);
+				/* dummy */ poke (addr.w, tmp0.l);
+				tmp0.h = !!p.c;
+				p.c = !!(tmp0.l & 0x80);
+				tmp0.l = (tmp0.l << 1u) | tmp0.h;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				poke (addr.w, tmp0.l);
+				break;
+
+				// ROR
+			case 0x7E:
+				peek (addr.w, tmp0.l);
+			case 0x66:
+			case 0x76:
+			case 0x6E:
+				peek (addr.w, tmp0.l);
+				/* dummy */ poke (addr.w, tmp0.l);
+				tmp0.h = !!p.c;
+				p.c = !!(tmp0.l & 0x1u);
+				tmp0.l = (tmp0.l >> 1u) | (tmp0.h << 7u);
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				poke (addr.w, tmp0.l);
+				break;
+
+				// INC
+			case 0xFE:
+				peek (addr.w, tmp0.l);
+			case 0xE6:
+			case 0xF6:
+			case 0xEE:
+				peek (addr.w, tmp0.l);
+				/* dummy */ poke (addr.w, tmp0.l);
+				++tmp0.l;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				poke (addr.w, tmp0.l);
+				break;
+
+				// DEC
+			case 0xDE:
+				peek (addr.w, tmp0.l);
+			case 0xC6:
+			case 0xD6:
+			case 0xCE:
+				peek (addr.w, tmp0.l);
+				/* dummy */ poke (addr.w, tmp0.l);
+				--tmp0.l;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				poke (addr.w, tmp0.l);
+				break;
+
+				// DCP/DCM
+			case 0xC7: // DCM ab                      5
+			case 0xD7: // DCM ab,X                    6
+			case 0xCF: // DCM abcd        No. Cycles= 6
+			case 0xDF: // DCM abcd,X                  7
+			case 0xDB: // DCM abcd,Y                  7
+			case 0xC3: // DCM (ab,X)                  8
+			case 0xD3: // DCM (ab),Y                  8
+				if (cxpg == true)
+					peek (addr.w, tmp0.w);
+				peek (addr.w, tmp0.l);
+				peek (addr.w, tmp0.l--);
+				p.z = !!(a == tmp0.l);
+				p.n = !!((a - tmp0.l) & 0x80u);
+				p.c = !!(tmp0.l <= a);
+				poke (addr.w, tmp0.l);
+				break;
+
+				// AXS
+			case 0x87: 	//AXS ab          ;ab       ;            3
+			case 0x97: 	//AXS ab,Y        ;ab       ;            4
+			case 0x8F: 	//AXS abcd        ;cd ab    ;No. Cycles= 4
+			case 0x83: 	//AXS (ab,X)      ;ab       ;            6
+				poke (addr.w, a & x);
+				break;
+
+				// ISB/INS/ISC
+			case 0xE7: // INS ab                   5
+			case 0xF7: // INS ab,X                 6
+			case 0xEF: // INS abcd     No. Cycles= 6
+			case 0xFF: // INS abcd,X               7
+			case 0xFB: // INS abcd,Y               7
+			case 0xE3: // INS (ab,X)               8
+			case 0xF3: // INS (ab),Y               8
+				if (cxpg == true)
+					peek (addr.w, tmp0.w);
+				peek (addr.w, tmp0.w);
+				/* dummy */ poke (addr.w, tmp0.l++);
+				poke (addr.w, tmp0.w);
+				tmp1.w = a - tmp0.w - !p.c;
+				p.z = !tmp1.l;
+				p.n = !!(tmp1.l & 0x80);
+				p.c = !tmp1.h;
+				p.v = !!(((a ^ tmp0.l) & (a ^ tmp1.l)) >> 7u);
+				a = tmp1.l;
+				break;
+
+				// ASO/SLO
+			case 0x1F: // ASO abcd,X               7
+			case 0x1B: // ASO abcd,Y               7
+			case 0x13: // ASO (ab),Y               8
+				peek (addr.w, tmp0.l);
+			case 0x07: // ASO ab                   5
+			case 0x17: // ASO ab,X                 6
+			case 0x0F: // ASO abcd     No. Cycles= 6
+			case 0x03: // ASO (ab,X)               8
+				peek (addr.w, tmp0.l);
+				p.c = !!(tmp0.l & 0x80);
+				tmp0.l <<= 1u;
+				poke (addr.w, tmp0.l);
+				peek (addr.w, tmp0.l = (a |= tmp0.l));
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+				// RLA
+			case 0x33: // RLA (ab),Y               8
+			case 0x3B: // RLA abcd,Y               7
+			case 0x3F: // RLA abcd,X               7
+				peek (addr.w, tmp0.l);
+			case 0x27: // RLA ab                   5
+			case 0x37: // RLA ab,X                 6
+			case 0x2F: // RLA abcd     No. Cycles= 6
+			case 0x23: // RLA (ab,X)               8
+				peek (addr.w, tmp0.l);
+				tmp0.h = !!p.c;
+				p.c = !!(tmp0.l & 0x80);
+				tmp0.l = (tmp0.l << 1u) | tmp0.h;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				poke (addr.w, tmp0.l);
+				peek (addr.w, a &= tmp0.l);
+				break;
+
+				// LSE/SRE
+			case 0x5F: // LSE abcd,X              7
+			case 0x5B: // LSE abcd,Y              7
+			case 0x53: // LSE (ab),Y              8
+				peek (addr.w, tmp0.l);
+			case 0x47: // LSE ab                  5
+			case 0x57: // LSE ab,X                6
+			case 0x4F: // LSE abcd    No. Cycles= 6
+			case 0x43: // LSE (ab,X)              8
+				peek (addr.w, tmp0.l);
+				p.c = !!(tmp0.l & 0x1u);
+				tmp0.l >>= 1u;
+				poke (addr.w, tmp0.l);
+				peek (addr.w, tmp0.l = (a ^= tmp0.l));
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80u);
+				break;
+
+			case 0x7B: // RRA abcd,Y              7
+			case 0x7F: // RRA abcd,X              7
+			case 0x73: // RRA (ab),Y              8
+				peek (addr.w, tmp0.l);
+			case 0x67: // RRA ab                  5
+			case 0x77: // RRA ab,X                6
+			case 0x6F: // RRA abcd    No. Cycles= 6
+			case 0x63: // RRA (ab,X)              8
+				peek (addr.w, tmp0.l);
+				tmp0.h = !!p.c;
+				p.c = !!(tmp0.l & 0x1u);
+				tmp0.l = (tmp0.l >> 1u) | (tmp0.h << 7u);
+				poke (addr.w, tmp0.w &= 0xff);
+				peek (addr.w, tmp0.w);
+				tmp1.w = tmp0.w + (!!p.c) + a;
+				p.z = !tmp1.l;
+				p.n = !!(tmp1.l & 0x80);
+				p.c = !!tmp1.h;
+				p.v = !!((~(a ^ tmp0.l) & (a ^ tmp1.l)) >> 7u);
+				a = tmp1.l;
+				break;
+
+			case 0xBB:
+				if (cross)
+					tick<kDummyPeek> (m, addr.w, tmp0.l);
+				tmp0.l &= s;
+				a = tmp0.l;
+				x = tmp0.l;
+				s = tmp0.l;
+				p.z = !tmp0.l;
+				p.n = !!(tmp0.l & 0x80);
+				tick<kDummyPeek> (m, addr.w, tmp0.l);
+				break;
+
+				// NOP
+			case 0x1C:
+			case 0x3C:
+			case 0x5C:
+			case 0x7C:
+			case 0xDC:
+			case 0xFC:
+				if (cxpg == true)
+					peek (addr.w, tmp0.w);
+			case 0x0C:
+			case 0x04:
+			case 0x14:
+			case 0x34:
+			case 0x44:
+			case 0x54:
+			case 0x64:
+			case 0x74:
+			case 0x80:
+			case 0xD4:
+			case 0xF4:
+				peek (addr.w, tmp0.w);
+			case 0x1A:
+			case 0x3A:
+			case 0x5A:
+			case 0x7A:
+			case 0xDA:
+			case 0xEA:
+			case 0xFA:
+				break;
+
+			default:
+				assert (false);
+				break;
+			}
 
 		}
 	}
 
 private:
-	_Host&	host_;
+	_Host& host_;
 
 	/// Registers
 
@@ -526,14 +1291,14 @@ private:
 
 	// Various
 
-	bool		dma_ { false	};	// DMA Trigger
-	byte		dpg_ { 0u			};  // DMA Page
+	bool		dma_ { false };	// DMA Trigger
+	byte		dpg_ { 0u };  // DMA Page
 
-	qword		clk_ { 0ull		};
+	qword		clk_ { 0ull };
 
-	bool		nmi_ { false	};
-	bool		rst_ { false	};
-	bool		irq_ { false	};
-	
+	bool		nmi_ { false };
+	bool		rst_ { false };
+	bool		irq_ { false };
+
 
 };
