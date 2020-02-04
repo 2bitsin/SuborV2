@@ -24,6 +24,9 @@
     <ClCompile Include="src\cart\cartdata.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\data\nestest_log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\etc\coro.hpp">
@@ -53,10 +56,10 @@
     <ClInclude Include="src\etc\bits.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\data\nestest_log.cpp">
+    <ClInclude Include="src\data\nestest_log.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\data\nestest_log.hpp">
+    <ClInclude Include="src\etc\literals.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

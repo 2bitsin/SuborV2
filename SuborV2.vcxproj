@@ -169,6 +169,7 @@
     <ClInclude Include="src\cart\cartdata.hpp" />
     <ClInclude Include="src\etc\bits.hpp" />
     <ClInclude Include="src\etc\coro.hpp" />
+    <ClInclude Include="src\etc\literals.hpp" />
     <ClInclude Include="src\etc\load_file.hpp" />
     <ClInclude Include="src\etc\md5.hpp" />
     <ClInclude Include="src\etc\types.hpp" />

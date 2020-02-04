@@ -152,11 +152,11 @@ struct core
 					poke (0x2004u, temp);
 				}
 			}
-			else if (xchg (rst_, false))
+			else if (xchg (rst, false))
 				next = Instr_RST;
-			else if (xchg (nmi_, false))
+			else if (xchg (nmi, false))
 				next = Instr_NMI;
-			else if (irq_ && !p.i)
+			else if (irq && !p.i)
 				next = Instr_IRQ;
 			else
 				next = peek (pc.w++);
@@ -567,7 +567,7 @@ struct core
 			case 0xBD:
 				if (cxpg == true)
 					tmp0.w = peek (addr.w);
-				peek (addr.w, tmp0.l);
+				tmp0.l = peek (addr.w);
 				p.z = !!(tmp0.l == 0u);
 				p.n = !!(tmp0.l & 0x80u);
 				a = tmp0.l;
@@ -635,7 +635,7 @@ struct core
 			case 0x91:
 			case 0x99:
 			case 0x9D:
-				peek (addr.w, a);
+				poke (addr.w, a); // Dummy write
 			case 0x81:
 			case 0x85:
 			case 0x8D:
@@ -646,8 +646,8 @@ struct core
 				// BIT
 			case 0x24:
 			case 0x2C:
-				tmp0.w = peek (addr.w);
-				p.z = !(tmp0.l & a);
+				tmp0.l = peek (addr.w);
+				p.z =  !(tmp0.l & a);
 				p.n = !!(tmp0.l & 0x80u);
 				p.v = !!(tmp0.l & 0x40u);
 				break;
@@ -1119,9 +1119,10 @@ struct core
 			case 0xC3: // DCM (ab,X)                  8
 			case 0xD3: // DCM (ab),Y                  8
 				if (cxpg == true)
-					tmp0.w = peek (addr.w);
-				peek (addr.w, tmp0.l);
+					tmp0.l = peek (addr.w);		// Dummy read
+				tmp0.l = peek (addr.w);			// Dummy read
 				tmp0.l = peek (addr.w);
+				--tmp0.l;
 				p.z = !!(a == tmp0.l);
 				p.n = !!((a - tmp0.l) & 0x80u);
 				p.c = !!(tmp0.l <= a);
@@ -1161,18 +1162,19 @@ struct core
 			case 0x1F: // ASO abcd,X               7
 			case 0x1B: // ASO abcd,Y               7
 			case 0x13: // ASO (ab),Y               8
-				peek (addr.w, tmp0.l);
+				peek (addr.w);				// Dummy read
 			case 0x07: // ASO ab                   5
 			case 0x17: // ASO ab,X                 6
 			case 0x0F: // ASO abcd     No. Cycles= 6
 			case 0x03: // ASO (ab,X)               8
-				peek (addr.w, tmp0.l);
-				p.c = !!(tmp0.l & 0x80);
-				tmp0.l <<= 1u;
-				poke (addr.w, tmp0.l);
-				peek (addr.w, tmp0.l = (a |= tmp0.l));
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+				temp = peek (addr.w);
+				p.c = !!(temp & 0x80);
+				temp <<= 1u;
+				poke (addr.w, temp);
+				a |= temp;
+				temp = peek (addr.w);
+				p.z = !temp;
+				p.n = !!(temp & 0x80u);
 				break;
 
 				// RLA
@@ -1233,8 +1235,8 @@ struct core
 				p.v = !!((~(a ^ tmp0.l) & (a ^ tmp1.l)) >> 7u);
 				a = tmp1.l;
 				break;
-
-			case 0xBB:
+				
+			case 0xBB: // LAS
 				if (cxpg)
 					peek (addr.w, tmp0.l);
 				tmp0.l &= s;
@@ -1292,12 +1294,11 @@ private:
 	bool		dma_ { false };	// DMA Trigger
 	byte		dpg_ { 0u };  // DMA Page
 
-
-	bool		nmi_ { false };
-	bool		rst_ { false };
-	bool		irq_ { false };
-
 public:
+
+	bool		nmi		{ false };
+	bool		rst		{ false };
+	bool		irq		{ false };
 	qword		clk		{ 0ull };
 
 	/// Registers

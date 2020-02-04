@@ -81,37 +81,47 @@ struct fmc
 
 	auto loop ()
 	{
+		ricore.p.all = 0x24u;
 		ricore.a = 0x00u;
 		ricore.x = 0x00u;
 		ricore.y = 0x00u;
 		ricore.s = 0xFDu;
-		ricore.p.all = 0x24u;
 		ricore.pc.w = 0xC000u;
 		ricore.clk = 7;
-
+		
 		std::printf("%-16s", "Initial");
 		for (auto&& line : nestest_log ())
 		{			
 			if (assert_state (ricore, line)) 
 			{
-				std::printf(" ... PASS\n");
+				std::printf(" ... PASS | ");
+				std::printf("A:%02X X:%02X Y:%02X S:%02X P:%02X PC:%04X\n",
+										ricore.a, ricore.x, ricore.y, ricore.s, ricore.p.all, ricore.pc.w);
+				switch(line.nbytes)
+				{
+				case 1: std::printf("%02X       | ", line.opbytes[0]); break;
+				case 2: std::printf("%02X %02X    | ", line.opbytes[0], line.opbytes[1]); break;
+				case 3: std::printf("%02X %02X %02X | ", line.opbytes[0], line.opbytes[1], line.opbytes[2]); break;
+				}
 				std::printf("%-16s", line.instruction);				
-				ricore.exec ();				
+				ricore.exec ();
 				continue;
 			}
 
-			std::printf (" ... FAIL.\n");
-			std::printf ("|-------------|-------------|\n");
-			std::printf ("| Actual      | Expected    |\n");
-			std::printf ("|-------------|-------------|\n");
-			std::printf ("| A  = 0x%02X   | A  = 0x%02X   |\n", ricore.a, line.a);
-			std::printf ("| X  = 0x%02X   | X  = 0x%02X   |\n", ricore.x, line.x);
-			std::printf ("| Y  = 0x%02X   | Y  = 0x%02X   |\n", ricore.y, line.y);
-			std::printf ("| S  = 0x%02X   | S  = 0x%02X   |\n", ricore.s, line.s);
-			std::printf ("| P  = 0x%02X   | P  = 0x%02X   |\n", ricore.p.all, line.p);
-			std::printf ("| PC = 0x%04X | PC = 0x%04X |\n", ricore.pc.w, line.pc);
-			std::printf ("| CK = %-6lld | CK = %-6lld |\n", ricore.ticks_elapsed(), line.cpuclock);
-			std::printf ("|-------------|-------------|\n");
+			std::printf (" ... FAIL\n");
+			std::printf ("\n");
+			std::printf ("    |-------------|-------------|\n");
+			std::printf ("    | Actual      | Expected    |\n");
+			std::printf ("    |-------------|-------------|\n");
+			std::printf ("    | A  = 0x%02X   | A  = 0x%02X   |\n", ricore.a, line.a);
+			std::printf ("    | X  = 0x%02X   | X  = 0x%02X   |\n", ricore.x, line.x);
+			std::printf ("    | Y  = 0x%02X   | Y  = 0x%02X   |\n", ricore.y, line.y);
+			std::printf ("    | S  = 0x%02X   | S  = 0x%02X   |\n", ricore.s, line.s);
+			std::printf ("    | P  = 0x%02X   | P  = 0x%02X   |\n", ricore.p.all, line.p);
+			std::printf ("    | PC = 0x%04X | PC = 0x%04X |\n", ricore.pc.w, line.pc);
+			std::printf ("    | CK = %-6lld | CK = %-6lld |\n", ricore.ticks_elapsed(), line.cpuclock);
+			std::printf ("    |-------------|-------------|\n");
+			std::printf ("\n");
 			throw std::runtime_error ("Bad state.");
 		}
 	}
