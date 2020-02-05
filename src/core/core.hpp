@@ -748,14 +748,12 @@ struct core
 			case 0x79:
 			case 0x61:
 			case 0x71:
-				if (cxpg == true)
-					peek (addr.w); //Dummy read
+				if (cxpg) peek (addr.w); //Dummy read
 				tmp0.w = peek (addr.w);
 				/* ADC */ 
 				tmp1.w = a + tmp0.w + p.c;				
-				uc_upnz(tmp1.l);
-				p.v = !!(((a ^ tmp1.l) & (a ^ ~tmp0.l)) >> 7u);
-				p.c = !!tmp1.h;
+				uc_upnz (tmp1.l);
+				uc_upcv (tmp1, tmp0);
 				a = tmp1.l;
 				/* ADC */ 
 				break;
@@ -770,14 +768,12 @@ struct core
 			case 0xF5:
 			case 0xF9:
 			case 0xFD:
-				if (cxpg == true)
-					peek (addr.w);
+				if (cxpg) peek (addr.w);
 				tmp0.w = peek (addr.w);
 				/* SBC */ tmp0.w = ~tmp0.w;
 				tmp1.w = a + tmp0.w + p.c;
-				uc_upnz(tmp1.l);
-				p.v = !!(((a ^ tmp1.l) & (a ^ ~tmp0.l)) >> 7u);
-				p.c = !!tmp1.h;				
+				uc_upnz (tmp1.l);
+				uc_upcv (tmp1, tmp0);
 				a = tmp1.l;
 				/* SBC */ p.c = !p.c;
 				break;
@@ -1288,6 +1284,12 @@ struct core
 			}
 
 		}
+	}
+
+	void uc_upcv (Word& lhs, Word rhs)
+	{
+		p.v = !!(((a ^ lhs.l) & (a ^ ~rhs.l)) >> 7u);
+		p.c = !!lhs.h;
 	}
 
 private:
