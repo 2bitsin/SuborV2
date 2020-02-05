@@ -751,11 +751,13 @@ struct core
 				if (cxpg == true)
 					peek (addr.w); //Dummy read
 				tmp0.w = peek (addr.w);
+				/* ADC */ 
 				tmp1.w = a + tmp0.w + p.c;				
 				uc_upnz(tmp1.l);
 				p.v = !!(((a ^ tmp1.l) & (a ^ ~tmp0.l)) >> 7u);
 				p.c = !!tmp1.h;
 				a = tmp1.l;
+				/* ADC */ 
 				break;
 
 				// SBC
@@ -770,16 +772,14 @@ struct core
 			case 0xFD:
 				if (cxpg == true)
 					peek (addr.w);
-				tmp0.w = ~peek (addr.w);
-				tmp0.w -= !p.c;
-				tmp1.w = a + tmp0.w;
-				tmp1.w += 1u;
+				tmp0.w = peek (addr.w);
+				/* SBC */ tmp0.w = ~tmp0.w;
+				tmp1.w = a + tmp0.w + p.c;
 				uc_upnz(tmp1.l);
 				p.v = !!(((a ^ tmp1.l) & (a ^ ~tmp0.l)) >> 7u);
 				p.c = !!tmp1.h;				
 				a = tmp1.l;
-
-				p.c = !p.c;
+				/* SBC */ p.c = !p.c;
 				break;
 
 				// SEC
