@@ -573,8 +573,7 @@ struct core
 			case 0xB5:
 			case 0xB9:
 			case 0xBD:
-				if (cxpg == true)
-					peek (addr.w);
+				if (cxpg) peek (addr.w); //Dummy read
 				temp = peek (addr.w);
 				uc_upnz(temp);
 				a = temp;
@@ -586,8 +585,7 @@ struct core
 			case 0xA6:
 			case 0xAE:
 			case 0xBE:
-				if (cxpg == true)
-					peek (addr.w);
+				if (cxpg) peek (addr.w); //Dummy read
 				temp = peek (addr.w);
 				uc_upnz(temp);
 				x = temp;
@@ -600,8 +598,7 @@ struct core
 			case 0xBF: // LAX abcd,Y        ;            4*
 			case 0xA3: // LAX (ab,X)        ;boundary    6
 			case 0xB3: // LAX (ab),Y        ;is crossed  5*
-				if (cxpg == true)
-					peek (addr.w);
+				if (cxpg) peek (addr.w); //Dummy read
 				temp = peek (addr.w);
 				uc_upnz(temp);
 				x = temp;
@@ -614,8 +611,7 @@ struct core
 			case 0xA4:
 			case 0xAC:
 			case 0xBC:
-				if (cxpg == true)
-					peek (addr.w);
+				if (cxpg) peek (addr.w); //Dummy read
 				temp = peek (addr.w);
 				uc_upnz(temp);
 				y = temp;
@@ -678,8 +674,7 @@ struct core
 			case 0xD5:
 			case 0xD9:
 			case 0xDD:
-				if (cxpg == true)
-					peek (addr.w); //Dummy read
+				if (cxpg) peek (addr.w); //Dummy read
 				temp = peek (addr.w);
 				uc_upnz(a - temp);
 				p.c = (a >= temp);
@@ -689,8 +684,7 @@ struct core
 			case 0xC0:
 			case 0xC4:
 			case 0xCC:
-				if (cxpg == true)
-					peek (addr.w); //Dummy read
+				if (cxpg) peek (addr.w); //Dummy read
 				temp = peek (addr.w);
 				uc_upnz(y - temp);
 				p.c = (y >= temp);
@@ -700,8 +694,7 @@ struct core
 			case 0xE0:
 			case 0xE4:
 			case 0xEC:
-				if (cxpg == true)
-					peek (addr.w); //Dummy read
+				if (cxpg) peek (addr.w); //Dummy read
 				temp = peek (addr.w);
 				uc_upnz(x - temp);
 				p.c = (x >= temp);
@@ -716,8 +709,7 @@ struct core
 			case 0x15:
 			case 0x19:
 			case 0x1D:
-				if (cxpg == true)
-					peek (addr.w); //Dummy read
+				if (cxpg) peek (addr.w); //Dummy read
 				temp = peek (addr.w);
 				temp = (a |= temp);
 				uc_upnz(temp);
@@ -732,8 +724,7 @@ struct core
 			case 0x59:
 			case 0x41:
 			case 0x51:
-				if (cxpg == true)
-					peek (addr.w); //Dummy read
+				if (cxpg) peek (addr.w); //Dummy read
 				temp = peek (addr.w);
 				temp = (a ^= temp);
 				uc_upnz(temp);
@@ -759,10 +750,10 @@ struct core
 				break;
 
 				// SBC
+			case 0xEB:
 			case 0xE1:
 			case 0xE5:
 			case 0xE9:
-			case 0xEB:
 			case 0xED:
 			case 0xF1:
 			case 0xF5:
