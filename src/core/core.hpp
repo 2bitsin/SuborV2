@@ -131,6 +131,15 @@ struct core
 		p.c = tmp1.h;
 		a = tmp1.l;
 	}
+
+	auto uc_brcc (bool condition, Word addr)
+	{
+		if (condition) {			
+			if (pc.h != addr.h)
+				peek ((pc.l = addr.l, pc.w));
+			peek (pc.w = addr.w);	
+		}
+	}
 	
 	void exec ()
 	{
@@ -916,78 +925,15 @@ struct core
 				uc_upnz (tmp0);
 				poke (addr.w, tmp0);
 				break;
-
-				// BCS
-			case 0xB0:
-				if (!p.c)
-					break;
-				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0);
-				peek (pc.w = addr.w, tmp0);
-				break;
-
-				// BCC
-			case 0x90:
-				if (p.c)
-					break;
-				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0);
-				peek (pc.w = addr.w, tmp0);
-				break;
-
-				// BEQ
-			case 0xF0:
-				if (!p.z)
-					break;
-				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0);
-				peek (pc.w = addr.w, tmp0);
-				break;
-
-				// BNE
-			case 0xD0:
-				if (p.z)
-					break;
-				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0);
-				peek (pc.w = addr.w, tmp0);
-				break;
-
-				// BVS
-			case 0x70:
-				if (!p.v)
-					break;
-				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0);
-				peek (pc.w = addr.w, tmp0);
-				break;
-
-				// BVC
-			case 0x50:
-				if (p.v)
-					break;
-				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0);
-				peek (pc.w = addr.w, tmp0);
-				break;
-
-				// BMI
-			case 0x30:
-				if (!p.n)
-					break;
-				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0);
-				peek (pc.w = addr.w, tmp0);
-				break;
-
-				// BPL
-			case 0x10:
-				if (p.n)
-					break;
-				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0);
-				peek (pc.w = addr.w, tmp0);
-				break;
+			
+			case 0xB0: uc_brcc (+p.c, addr); break; // BCS				
+			case 0x90: uc_brcc (!p.c, addr); break; // BCC
+			case 0xF0: uc_brcc (+p.z, addr); break; // BEQ				
+			case 0xD0: uc_brcc (!p.z, addr); break; // BNE				
+			case 0x70: uc_brcc (+p.v, addr); break; // BVS				
+			case 0x50: uc_brcc (!p.v, addr); break; // BVC				
+			case 0x30: uc_brcc (+p.n, addr); break; // BMI			
+			case 0x10: uc_brcc (!p.n, addr); break;	// BPL
 
 				// DCP/DCM
 			case 0xC7: // DCM ab                      5
