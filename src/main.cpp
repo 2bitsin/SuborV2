@@ -103,7 +103,7 @@ struct fmc
 		ricore.pc.w = 0xC000u;
 		ricore.clk = 7;
 		
-		std::printf("%-16s", "Initial");
+		std::printf("         | %-16s", "Initial");
 		for (auto&& line : nestest_log ())
 		{			
 			if (assert_state (ricore, line)) 

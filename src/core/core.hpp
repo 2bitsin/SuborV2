@@ -118,8 +118,18 @@ struct core
 
 	auto uc_upnz (byte value) 
 	{ 
-		p.n = !!(value &  0x80u); 
-		p.z = !!(value == 0x00u); 
+		p.n = (value &  0x80u); 
+		p.z = (value == 0x00u); 
+	}
+
+	auto uc_adc (Word tmp0)
+	{
+		Word tmp1;
+		tmp1.w = a + tmp0.w + p.c;				
+		uc_upnz (tmp1.l);
+		p.v = ((a ^ tmp1.l) & (a ^ ~tmp0.l)) >> 7u;
+		p.c = tmp1.h;
+		a = tmp1.l;
 	}
 	
 	void exec ()
@@ -143,10 +153,11 @@ struct core
 			bool cxpg { false };
 			word next { 0u };
 			Word addr { 0u };
-			byte temp { 0u };
+			byte tmp0 { 0u };
+			byte tmp1 { 0u };
 			byte offs { 0u };
-
-			Word tmp0, tmp1 ;
+			
+			Word _tmp0, _tmp1 ;
 
 			if (xchg (dma_, false))
 			{
@@ -156,8 +167,8 @@ struct core
 					peek (addr.w);
 				for (offs = 0u; offs < 0x100; ++offs)
 				{
-					peek (addr.w + offs, temp);
-					poke (0x2004u, temp);
+					peek (addr.w + offs, tmp0);
+					poke (0x2004u, tmp0);
 				}
 			}
 			else if (xchg (rst, false))
@@ -413,9 +424,9 @@ struct core
 			case 0xFF:
 				addr.l = peek (pc.w++);
 				addr.h = peek (pc.w++);
-				temp = addr.h;
+				tmp0 = addr.h;
 				addr.w += x;
-				cxpg = addr.h != temp;
+				cxpg = addr.h != tmp0;
 				break;
 
 				// Absolute, Y
@@ -441,19 +452,19 @@ struct core
 			case 0xFB:
 				addr.l = peek (pc.w++);
 				addr.h = peek (pc.w++);
-				temp = addr.h;
+				tmp0 = addr.h;
 				addr.w += y;
-				cxpg = addr.h != temp;
+				cxpg = addr.h != tmp0;
 				break;
 
 				// (Indirect)
 			case 0x6C:
 				addr.l = peek (pc.w++);
 				addr.h = peek (pc.w++);
-				temp = peek (addr.w);
+				tmp0 = peek (addr.w);
 				addr.l += 1u;
 				addr.h = peek (addr.w);
-				addr.l = temp;
+				addr.l = tmp0;
 				break;
 
 				// (Indirect, X)
@@ -473,10 +484,10 @@ struct core
 			case 0xC3:
 			case 0xE1:
 			case 0xE3:
-				temp = peek (pc.w++) + x;
-				peek (temp);							// Dummy read
-				addr.l = peek (temp);
-				addr.h = peek (++temp);
+				tmp0 = peek (pc.w++) + x;
+				peek (tmp0);							// Dummy read
+				addr.l = peek (tmp0);
+				addr.h = peek (++tmp0);
 				break;
 
 				// (Indirect), Y
@@ -496,12 +507,12 @@ struct core
 			case 0xD3:
 			case 0xF1:
 			case 0xF3:
-				temp = peek (pc.w++);
-				addr.l = peek (temp + 0u);				
-				addr.h = peek ((temp + 1u) & 0xff);
-				temp = addr.h;
+				tmp0 = peek (pc.w++);
+				addr.l = peek (tmp0 + 0u);				
+				addr.h = peek ((tmp0 + 1u) & 0xff);
+				tmp0 = addr.h;
 				addr.w += y;
-				cxpg = addr.h != temp;
+				cxpg = addr.h != tmp0;
 				break;
 
 				// Relative
@@ -574,9 +585,9 @@ struct core
 			case 0xB9:
 			case 0xBD:
 				if (cxpg) peek (addr.w); //Dummy read
-				temp = peek (addr.w);
-				uc_upnz(temp);
-				a = temp;
+				tmp0 = peek (addr.w);
+				uc_upnz(tmp0);
+				a = tmp0;
 				break;
 
 				// LDX
@@ -586,9 +597,9 @@ struct core
 			case 0xAE:
 			case 0xBE:
 				if (cxpg) peek (addr.w); //Dummy read
-				temp = peek (addr.w);
-				uc_upnz(temp);
-				x = temp;
+				tmp0 = peek (addr.w);
+				uc_upnz(tmp0);
+				x = tmp0;
 				break;
 
 				// LAX
@@ -599,10 +610,10 @@ struct core
 			case 0xA3: // LAX (ab,X)        ;boundary    6
 			case 0xB3: // LAX (ab),Y        ;is crossed  5*
 				if (cxpg) peek (addr.w); //Dummy read
-				temp = peek (addr.w);
-				uc_upnz(temp);
-				x = temp;
-				a = temp;
+				tmp0 = peek (addr.w);
+				uc_upnz(tmp0);
+				x = tmp0;
+				a = tmp0;
 				break;
 
 				// LDY
@@ -612,9 +623,9 @@ struct core
 			case 0xAC:
 			case 0xBC:
 				if (cxpg) peek (addr.w); //Dummy read
-				temp = peek (addr.w);
-				uc_upnz(temp);
-				y = temp;
+				tmp0 = peek (addr.w);
+				uc_upnz(tmp0);
+				y = tmp0;
 				break;
 
 				// STX
@@ -646,9 +657,9 @@ struct core
 				// BIT
 			case 0x24:
 			case 0x2C:
-				temp = peek (addr.w);
-				p.z = !(temp & a);
-				splice_mask_inplace<192>(p.all, temp);
+				tmp0 = peek (addr.w);
+				p.z = !(tmp0 & a);
+				splice_mask_inplace<192>(p.all, tmp0);
 				break;
 
 				// AND
@@ -660,9 +671,9 @@ struct core
 			case 0x35:
 			case 0x39:
 			case 0x3D:
-				temp = peek (addr.w);
-				temp = (a &= temp);
-				uc_upnz(temp);
+				tmp0 = peek (addr.w);
+				tmp0 = (a &= tmp0);
+				uc_upnz(tmp0);
 				break;
 
 				// CMP
@@ -675,9 +686,9 @@ struct core
 			case 0xD9:
 			case 0xDD:
 				if (cxpg) peek (addr.w); //Dummy read
-				temp = peek (addr.w);
-				uc_upnz(a - temp);
-				p.c = (a >= temp);
+				tmp0 = peek (addr.w);
+				uc_upnz(a - tmp0);
+				p.c = (a >= tmp0);
 				break;
 
 				// CPY
@@ -685,9 +696,9 @@ struct core
 			case 0xC4:
 			case 0xCC:
 				if (cxpg) peek (addr.w); //Dummy read
-				temp = peek (addr.w);
-				uc_upnz(y - temp);
-				p.c = (y >= temp);
+				tmp0 = peek (addr.w);
+				uc_upnz(y - tmp0);
+				p.c = (y >= tmp0);
 				break;
 
 				// CPX
@@ -695,9 +706,9 @@ struct core
 			case 0xE4:
 			case 0xEC:
 				if (cxpg) peek (addr.w); //Dummy read
-				temp = peek (addr.w);
-				uc_upnz(x - temp);
-				p.c = (x >= temp);
+				tmp0 = peek (addr.w);
+				uc_upnz(x - tmp0);
+				p.c = (x >= tmp0);
 				break;
 
 				// ORA
@@ -710,9 +721,8 @@ struct core
 			case 0x19:
 			case 0x1D:
 				if (cxpg) peek (addr.w); //Dummy read
-				temp = peek (addr.w);
-				temp = (a |= temp);
-				uc_upnz(temp);
+				tmp0 = peek (addr.w);
+				uc_upnz(a |= tmp0);
 				break;
 
 				// EOR
@@ -724,10 +734,9 @@ struct core
 			case 0x59:
 			case 0x41:
 			case 0x51:
-				if (cxpg) peek (addr.w); //Dummy read
-				temp = peek (addr.w);
-				temp = (a ^= temp);
-				uc_upnz(temp);
+				if (cxpg) peek (addr.w); // Dummy read
+				tmp0 = peek (addr.w);
+				uc_upnz(a ^= tmp0);
 				break;
 
 				// ADC
@@ -739,14 +748,8 @@ struct core
 			case 0x79:
 			case 0x61:
 			case 0x71:
-				if (cxpg) peek (addr.w); //Dummy read
-				tmp0.w = peek (addr.w);
-				/* ADC */ 
-				tmp1.w = a + tmp0.w + p.c;				
-				uc_upnz (tmp1.l);
-				uc_upcv (tmp1, tmp0);
-				a = tmp1.l;
-				/* ADC */ 
+				if (cxpg) peek (addr.w); // Dummy read
+				uc_adc (peek (addr.w));
 				break;
 
 				// SBC
@@ -759,152 +762,159 @@ struct core
 			case 0xF5:
 			case 0xF9:
 			case 0xFD:
-				if (cxpg) peek (addr.w);
-				tmp0.w = peek (addr.w);
-				/* SBC */ tmp0.w = ~tmp0.w;
-				tmp1.w = a + tmp0.w + p.c;
-				uc_upnz (tmp1.l);
-				uc_upcv (tmp1, tmp0);
-				a = tmp1.l;
-				/* SBC */ p.c = !p.c;
+				if (cxpg) peek (addr.w); // Dummy read
+				uc_adc (~peek (addr.w));
+				p.c = !p.c;
+				break;
+				
+			case 0x18: p.c = false; break; // CLC				
+			case 0x38: p.c = true;	break; // SEC				
+			case 0x58: p.i = false; break; // CLI
+			case 0x78: p.i = true;	break; // SEI
+			case 0xB8: p.v = false; break; // CLV
+			case 0xD8: p.d = false; break; // CLD			
+			case 0xF8: p.d = true;	break; // SED				
+				
+			case 0xCA: uc_upnz (--x); break; // DEX
+			case 0x88: uc_upnz (--y); break; // DEY
+			case 0xE8: uc_upnz (++x); break; // INX				
+			case 0xC8: uc_upnz (++y); break; // INY
+			
+				// INC
+			case 0xFE:
+				peek (addr.w); // Dummy read
+			case 0xE6:
+			case 0xF6:
+			case 0xEE:
+				tmp0 = peek (addr.w);
+				poke (addr.w, tmp0); // Dummy write
+				uc_upnz(++tmp0);
+				poke (addr.w, tmp0);
 				break;
 
-				// SEC
-			case 0x38:
-				p.c = 1;
+				// DEC
+			case 0xDE:
+				peek (addr.w); // Dummy read
+			case 0xC6:
+			case 0xD6:
+			case 0xCE:
+				tmp0 = peek (addr.w);
+				poke (addr.w, tmp0); // Dummy write
+				uc_upnz(--tmp0);
+				poke (addr.w, tmp0);
 				break;
-
-				// SED
-			case 0xF8:
-				p.d = 1;
-				break;
-
-				// SEI
-			case 0x78:
-				p.i = 1;
-				break;
-
-				// CLC
-			case 0x18:
-				p.c = 0;
-				break;
-
-				// CLD
-			case 0xD8:
-				p.d = 0;
-				break;
-
-				// CLI
-			case 0x58:
-				p.i = 0;
-				break;
-
-				// CLV
-			case 0xB8:
-				p.v = 0;
-				break;
-
-				// DEX
-			case 0xCA:
-				tmp0.w = --x;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				break;
-
-				// DEY
-			case 0x88:
-				tmp0.w = --y;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				break;
-
-				// INX
-			case 0xE8:
-				tmp0.w = ++x;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				break;
-
-				// INY
-			case 0xC8:
-				tmp0.w = ++y;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				break;
+			
+			case 0xAA: uc_upnz (x = a); break; // TAX				
+			case 0xA8: uc_upnz (y = a); break; // TAY				
+			case 0x8A: uc_upnz (a = x); break; // TXA				
+			case 0x98: uc_upnz (a = y); break; // TYA
+			case 0xBA: uc_upnz (x = s); break; // TSX				
+			case 0x9A: s = x; break; // TXS
 
 				// ASL A
 			case 0x0A:
-				(tmp0.w = a) <<= 1u;
-				a = tmp0.l;
-				p.c = !!(tmp0.w & 0x100u);
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+				p.c = a & 0x80u;				
+				uc_upnz(a <<= 1u);
 				break;
 
 				// LSR A
 			case 0x4A:
-				p.c = !!(a & 0x1u);
-				tmp0.l = (a >>= 1u);
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+				p.c = a & 0x01u;
+				uc_upnz(a >>= 1u);
 				break;
 
 				// ROR A
 			case 0x6A:
-				tmp0.h = !!p.c;
-				p.c = !!(a & 0x1u);
-				tmp0.l = (a = (a >> 1u) | (tmp0.h << 7u));
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+				tmp0 = p.c;
+				p.c = a & 0x01u;
+				uc_upnz(a = (a >> 1u) | (tmp0 << 7u));
 				break;
 
 				// ROL A
 			case 0x2A:
-				tmp0.h = !!p.c;
-				p.c = !!(a & 0x80u);
-				tmp0.l = (a = (a << 1u) | tmp0.h);
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+				tmp0 = p.c;
+				p.c = a & 0x80u;				
+				uc_upnz(a = (a << 1u) | tmp0);
 				break;
 
-				// TAX
-			case 0xAA:
-				tmp0.w = x = a;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+				// PHP
+			case 0x08:
+				uc_push(p.all | 0x10); // Set break to 1
 				break;
 
-				// TAY
-			case 0xA8:
-				tmp0.w = y = a;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+				// PHA
+			case 0x48:
+				uc_push(a);
 				break;
 
-				// TXA
-			case 0x8A:
-				tmp0.w = a = x;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+				// PLP
+			case 0x28:
+				peek (0x100 + s);
+				p.all = uc_pull();
+				p.b = 0;
+				p.e = 1;
 				break;
 
-				// TYA
-			case 0x98:
-				tmp0.w = a = y;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+				// PLA
+			case 0x68:
+				peek (0x100 + s);
+				uc_upnz(a = uc_pull());
 				break;
 
-				// TSX
-			case 0xBA:
-				tmp0.w = x = s;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+				// ASL
+			case 0x1E:
+				peek (addr.w);
+			case 0x06:
+			case 0x16:
+			case 0x0E:
+				tmp0 = peek (addr.w);
+				poke (addr.w, tmp0); // Dummy write 
+				p.c = tmp0 & 0x80u;
+				uc_upnz(tmp0 <<= 1u);
+				poke (addr.w, tmp0);
 				break;
 
-				// TXS
-			case 0x9A:
-				tmp0.w = s = x;
+				// LSR
+			case 0x5E:
+				peek (addr.w);
+			case 0x46:
+			case 0x56:
+			case 0x4E:
+				tmp0 = peek (addr.w);
+				poke (addr.w, tmp0); // Dummy write  
+				p.c = tmp0 & 0x01u;
+				uc_upnz (tmp0 >>= 1u);
+				poke (addr.w, tmp0);
+				break;
+
+				// ROL
+			case 0x3E:
+				peek (addr.w); // Dummy read
+			case 0x26:
+			case 0x36:
+			case 0x2E:
+				tmp0 = peek (addr.w);
+				poke (addr.w, tmp0); // Dummy write
+				tmp1 = p.c;
+				p.c = tmp0 & 0x80u;
+				tmp0 = (tmp0 << 1u) | tmp1;
+				uc_upnz(tmp0);
+				poke (addr.w, tmp0);
+				break;
+
+				// ROR
+			case 0x7E:
+				peek (addr.w);  // Dummy read
+			case 0x66:
+			case 0x76:
+			case 0x6E:
+				tmp0 = peek (addr.w);
+				poke (addr.w, tmp0); // Dummy write
+				tmp1 = p.c;
+				p.c = tmp0 & 0x01u;
+				tmp0 = (tmp0 >> 1u) | (tmp1 << 7u);
+				uc_upnz (tmp0);
+				poke (addr.w, tmp0);
 				break;
 
 				// BCS
@@ -912,8 +922,8 @@ struct core
 				if (!p.c)
 					break;
 				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0.l);
-				peek (pc.w = addr.w, tmp0.l);
+					peek ((pc.l = addr.l, pc.w), tmp0);
+				peek (pc.w = addr.w, tmp0);
 				break;
 
 				// BCC
@@ -921,8 +931,8 @@ struct core
 				if (p.c)
 					break;
 				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0.l);
-				peek (pc.w = addr.w, tmp0.l);
+					peek ((pc.l = addr.l, pc.w), tmp0);
+				peek (pc.w = addr.w, tmp0);
 				break;
 
 				// BEQ
@@ -930,8 +940,8 @@ struct core
 				if (!p.z)
 					break;
 				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0.l);
-				peek (pc.w = addr.w, tmp0.l);
+					peek ((pc.l = addr.l, pc.w), tmp0);
+				peek (pc.w = addr.w, tmp0);
 				break;
 
 				// BNE
@@ -939,8 +949,8 @@ struct core
 				if (p.z)
 					break;
 				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0.l);
-				peek (pc.w = addr.w, tmp0.l);
+					peek ((pc.l = addr.l, pc.w), tmp0);
+				peek (pc.w = addr.w, tmp0);
 				break;
 
 				// BVS
@@ -948,8 +958,8 @@ struct core
 				if (!p.v)
 					break;
 				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0.l);
-				peek (pc.w = addr.w, tmp0.l);
+					peek ((pc.l = addr.l, pc.w), tmp0);
+				peek (pc.w = addr.w, tmp0);
 				break;
 
 				// BVC
@@ -957,8 +967,8 @@ struct core
 				if (p.v)
 					break;
 				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0.l);
-				peek (pc.w = addr.w, tmp0.l);
+					peek ((pc.l = addr.l, pc.w), tmp0);
+				peek (pc.w = addr.w, tmp0);
 				break;
 
 				// BMI
@@ -966,8 +976,8 @@ struct core
 				if (!p.n)
 					break;
 				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0.l);
-				peek (pc.w = addr.w, tmp0.l);
+					peek ((pc.l = addr.l, pc.w), tmp0);
+				peek (pc.w = addr.w, tmp0);
 				break;
 
 				// BPL
@@ -975,128 +985,8 @@ struct core
 				if (p.n)
 					break;
 				if (pc.h != addr.h)
-					peek ((pc.l = addr.l, pc.w), tmp0.l);
-				peek (pc.w = addr.w, tmp0.l);
-				break;
-
-				// PHP
-			case 0x08:
-				tmp0.l = p.all | 0x10; // Set break to 1
-				poke (0x100 + s--, tmp0.l);
-				break;
-
-				// PHA
-			case 0x48:
-				tmp0.l = a;
-				poke (0x100 + s--, tmp0.l);
-				break;
-
-				// PLP
-			case 0x28:
-				peek (0x100 + s, tmp0.l);
-				peek (0x100 + ++s, tmp0.l);
-				p.all = tmp0.l;
-				p.b = 0;
-				p.e = 1;
-				break;
-
-				// PLA
-			case 0x68:
-				peek (0x100 + s, tmp0.l);
-				peek (0x100 + ++s, tmp0.l);
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				a = tmp0.l;
-				break;
-
-				// ASL
-			case 0x1E:
-				peek (addr.w, tmp0.l);
-			case 0x06:
-			case 0x16:
-			case 0x0E:
-				peek (addr.w, tmp0.l);
-				/* dummy */ poke (addr.w, tmp0.l);
-				p.c = !!(tmp0.l & 0x80);
-				tmp0.l <<= 1u;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				poke (addr.w, tmp0.l);
-				break;
-
-				// LSR
-			case 0x5E:
-				peek (addr.w, tmp0.l);
-			case 0x46:
-			case 0x56:
-			case 0x4E:
-				peek (addr.w, tmp0.l);
-				/* dummy */ poke (addr.w, tmp0.l);
-				p.c = !!(tmp0.l & 0x1u);
-				tmp0.l >>= 1u;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				poke (addr.w, tmp0.l);
-				break;
-
-				// ROL
-			case 0x3E:
-				peek (addr.w, tmp0.l);
-			case 0x26:
-			case 0x36:
-			case 0x2E:
-				peek (addr.w, tmp0.l);
-				/* dummy */ poke (addr.w, tmp0.l);
-				tmp0.h = !!p.c;
-				p.c = !!(tmp0.l & 0x80);
-				tmp0.l = (tmp0.l << 1u) | tmp0.h;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				poke (addr.w, tmp0.l);
-				break;
-
-				// ROR
-			case 0x7E:
-				peek (addr.w, tmp0.l);
-			case 0x66:
-			case 0x76:
-			case 0x6E:
-				peek (addr.w, tmp0.l);
-				/* dummy */ poke (addr.w, tmp0.l);
-				tmp0.h = !!p.c;
-				p.c = !!(tmp0.l & 0x1u);
-				tmp0.l = (tmp0.l >> 1u) | (tmp0.h << 7u);
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				poke (addr.w, tmp0.l);
-				break;
-
-				// INC
-			case 0xFE:
-				peek (addr.w, tmp0.l);
-			case 0xE6:
-			case 0xF6:
-			case 0xEE:
-				peek (addr.w, tmp0.l);
-				/* dummy */ poke (addr.w, tmp0.l);
-				++tmp0.l;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				poke (addr.w, tmp0.l);
-				break;
-
-				// DEC
-			case 0xDE:
-				peek (addr.w, tmp0.l);
-			case 0xC6:
-			case 0xD6:
-			case 0xCE:
-				peek (addr.w, tmp0.l);
-				/* dummy */ poke (addr.w, tmp0.l);
-				--tmp0.l;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				poke (addr.w, tmp0.l);
+					peek ((pc.l = addr.l, pc.w), tmp0);
+				peek (pc.w = addr.w, tmp0);
 				break;
 
 				// DCP/DCM
@@ -1108,14 +998,13 @@ struct core
 			case 0xC3: // DCM (ab,X)                  8
 			case 0xD3: // DCM (ab),Y                  8
 				if (cxpg == true)
-					tmp0.l = peek (addr.w);		// Dummy read
-				tmp0.l = peek (addr.w);			// Dummy read
-				tmp0.l = peek (addr.w);
-				--tmp0.l;
-				p.z = !!(a == tmp0.l);
-				p.n = !!((a - tmp0.l) & 0x80u);
-				p.c = !!(tmp0.l <= a);
-				poke (addr.w, tmp0.l);
+					tmp0 = peek (addr.w);		// Dummy read
+				tmp0 = peek (addr.w);			// Dummy read
+				tmp0 = peek (addr.w);
+				--tmp0;
+				uc_upnz(a - tmp0);
+				p.c = a >= tmp0;
+				poke (addr.w, tmp0);
 				break;
 
 				// AXS
@@ -1134,17 +1023,12 @@ struct core
 			case 0xFB: // INS abcd,Y               7
 			case 0xE3: // INS (ab,X)               8
 			case 0xF3: // INS (ab),Y               8
-				if (cxpg == true)
-					tmp0.w = peek (addr.w);
-				tmp0.w = peek (addr.w);
-				poke (addr.w, tmp0.l++); // Dummy write 
-				poke (addr.w, tmp0.l);
-				tmp1.w = a - tmp0.w - !p.c;
-				p.z = !tmp1.l;
-				p.n = !!(tmp1.l & 0x80);
-				p.c = !tmp1.h;
-				p.v = !!(((a ^ tmp0.l) & (a ^ tmp1.l)) >> 7u);
-				a = tmp1.l;
+				if (cxpg) peek (addr.w);
+				tmp0 = peek (addr.w);
+				poke (addr.w, tmp0++);
+				poke (addr.w, tmp0);
+				uc_adc (~tmp0);
+				p.c = !p.c;
 				break;
 
 				// ASO/SLO
@@ -1156,87 +1040,75 @@ struct core
 			case 0x17: // ASO ab,X                 6
 			case 0x0F: // ASO abcd     No. Cycles= 6
 			case 0x03: // ASO (ab,X)               8
-				temp = peek (addr.w);
-				p.c = !!(temp & 0x80);
-				temp <<= 1u;
-				poke (addr.w, temp);
-				temp = (a |= temp);
-				peek (addr.w);
-				p.z = !temp;
-				p.n = !!(temp & 0x80u);
-				break;
-
-				// RLA
-			case 0x33: // RLA (ab),Y               8
-			case 0x3B: // RLA abcd,Y               7
-			case 0x3F: // RLA abcd,X               7
-				peek (addr.w, tmp0.l);
-			case 0x27: // RLA ab                   5
-			case 0x37: // RLA ab,X                 6
-			case 0x2F: // RLA abcd     No. Cycles= 6
-			case 0x23: // RLA (ab,X)               8
-				peek (addr.w, tmp0.l);
-				tmp0.h = !!p.c;
-				p.c = !!(tmp0.l & 0x80);
-				tmp0.l = (tmp0.l << 1u) | tmp0.h;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
-				poke (addr.w, tmp0.l);
-				a &= tmp0.l;
-				peek (addr.w);
+				tmp0 = peek (addr.w);
+				p.c = tmp0 & 0x80;
+				tmp0 <<= 1u;
+				poke (addr.w, tmp0);
+				tmp0 = peek (addr.w);
+				uc_upnz (a |= tmp0);
 				break;
 
 				// LSE/SRE
 			case 0x5F: // LSE abcd,X              7
 			case 0x5B: // LSE abcd,Y              7
 			case 0x53: // LSE (ab),Y              8
-				peek (addr.w, tmp0.l);
+				peek (addr.w);
 			case 0x47: // LSE ab                  5
 			case 0x57: // LSE ab,X                6
 			case 0x4F: // LSE abcd    No. Cycles= 6
 			case 0x43: // LSE (ab,X)              8
-				peek (addr.w, tmp0.l);
-				p.c = !!(tmp0.l & 0x1u);
-				tmp0.l >>= 1u;
-				poke (addr.w, tmp0.l);
-				tmp0.l = (a ^= tmp0.l);
+				tmp0 = peek (addr.w);
+				p.c = tmp0 & 0x01u;
+				tmp0 >>= 1u;
+				poke (addr.w, tmp0);				
+				tmp0 = peek (addr.w);
+				uc_upnz (a ^= tmp0);
+				break;
+
+				// RLA
+			case 0x33: // RLA (ab),Y               8
+			case 0x3B: // RLA abcd,Y               7
+			case 0x3F: // RLA abcd,X               7
 				peek (addr.w);
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80u);
+			case 0x27: // RLA ab                   5
+			case 0x37: // RLA ab,X                 6
+			case 0x2F: // RLA abcd     No. Cycles= 6
+			case 0x23: // RLA (ab,X)               8
+				tmp0 = peek (addr.w);
+				tmp1 = p.c;
+				p.c = tmp0 & 0x80;
+				tmp0 = (tmp0 << 1u) | tmp1;
+				uc_upnz (tmp0);
+				poke (addr.w, tmp0);
+				tmp0 = peek (addr.w);
+				a &= tmp0;
 				break;
 
 			case 0x7B: // RRA abcd,Y              7
 			case 0x7F: // RRA abcd,X              7
 			case 0x73: // RRA (ab),Y              8
-				peek (addr.w, tmp0.l);
+				peek (addr.w);
 			case 0x67: // RRA ab                  5
 			case 0x77: // RRA ab,X                6
 			case 0x6F: // RRA abcd    No. Cycles= 6
 			case 0x63: // RRA (ab,X)              8
-				peek (addr.w, tmp0.l);
-				tmp0.h = !!p.c;
-				p.c = !!(tmp0.l & 0x1u);
-				tmp0.l = (tmp0.l >> 1u) | (tmp0.h << 7u);
-				poke (addr.w, tmp0.w &= 0xff);
-				tmp0.w = peek (addr.w);
-				tmp1.w = tmp0.w + (!!p.c) + a;
-				p.z = !tmp1.l;
-				p.n = !!(tmp1.l & 0x80);
-				p.c = !!tmp1.h;
-				p.v = !!((~(a ^ tmp0.l) & (a ^ tmp1.l)) >> 7u);
-				a = tmp1.l;
+				tmp0 = peek (addr.w);
+				tmp1 = !!p.c;
+				p.c = tmp0 & 0x01u;
+				tmp0 = (tmp0 >> 1u) | (tmp1 << 7u);
+				poke (addr.w, tmp0);
+				tmp0 = peek (addr.w);
+				uc_adc (tmp0);
 				break;
 				
 			case 0xBB: // LAS
-				if (cxpg)
-					peek (addr.w, tmp0.l);
-				tmp0.l &= s;
-				a = tmp0.l;
-				x = tmp0.l;
-				s = tmp0.l;
-				p.z = !tmp0.l;
-				p.n = !!(tmp0.l & 0x80);
-				peek (addr.w); // Dummy read
+				if (cxpg) peek (addr.w);
+				tmp0 = peek (addr.w); // Dummy read
+				tmp0 &= s;
+				a = tmp0;
+				x = tmp0;
+				s = tmp0;
+				uc_upnz (tmp0);
 				break;
 
 				// NOP
@@ -1246,8 +1118,7 @@ struct core
 			case 0x7C:
 			case 0xDC:
 			case 0xFC:
-				if (cxpg == true)
-					peek (addr.w);  // Dummy Read
+				if (cxpg) peek (addr.w);  // Dummy Read
 			case 0x0C:
 			case 0x04:
 			case 0x14:
@@ -1275,12 +1146,6 @@ struct core
 			}
 
 		}
-	}
-
-	void uc_upcv (Word& lhs, Word rhs)
-	{
-		p.v = !!(((a ^ lhs.l) & (a ^ ~rhs.l)) >> 7u);
-		p.c = !!lhs.h;
 	}
 
 private:
