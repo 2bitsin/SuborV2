@@ -776,13 +776,22 @@ struct core
 				p.c = !p.c;
 				break;
 				
-			case 0x18: p.c = false; break; // CLC				
-			case 0x38: p.c = true;	break; // SEC				
+			case 0x18: p.c = false; break; // CLC
+			case 0x38: p.c = true;	break; // SEC
 			case 0x58: p.i = false; break; // CLI
 			case 0x78: p.i = true;	break; // SEI
 			case 0xB8: p.v = false; break; // CLV
-			case 0xD8: p.d = false; break; // CLD			
-			case 0xF8: p.d = true;	break; // SED				
+			case 0xD8: p.d = false; break; // CLD
+			case 0xF8: p.d = true;	break; // SED
+			
+			case 0xB0: uc_brcc (+p.c, addr); break; // BCS				
+			case 0x90: uc_brcc (!p.c, addr); break; // BCC
+			case 0xF0: uc_brcc (+p.z, addr); break; // BEQ				
+			case 0xD0: uc_brcc (!p.z, addr); break; // BNE				
+			case 0x70: uc_brcc (+p.v, addr); break; // BVS				
+			case 0x50: uc_brcc (!p.v, addr); break; // BVC				
+			case 0x30: uc_brcc (+p.n, addr); break; // BMI			
+			case 0x10: uc_brcc (!p.n, addr); break;	// BPL
 				
 			case 0xCA: uc_upnz (--x); break; // DEX
 			case 0x88: uc_upnz (--y); break; // DEY
@@ -925,15 +934,6 @@ struct core
 				uc_upnz (tmp0);
 				poke (addr.w, tmp0);
 				break;
-			
-			case 0xB0: uc_brcc (+p.c, addr); break; // BCS				
-			case 0x90: uc_brcc (!p.c, addr); break; // BCC
-			case 0xF0: uc_brcc (+p.z, addr); break; // BEQ				
-			case 0xD0: uc_brcc (!p.z, addr); break; // BNE				
-			case 0x70: uc_brcc (+p.v, addr); break; // BVS				
-			case 0x50: uc_brcc (!p.v, addr); break; // BVC				
-			case 0x30: uc_brcc (+p.n, addr); break; // BMI			
-			case 0x10: uc_brcc (!p.n, addr); break;	// BPL
 
 				// DCP/DCM
 			case 0xC7: // DCM ab                      5
