@@ -18,11 +18,11 @@ struct core
 		{}
 
 		Word (word wv)
-		: w (wv)
+			: w (wv)
 		{}
 
 		Word (byte lo, byte hi)
-		: l (lo), h (hi)
+			: l (lo), h (hi)
 		{}
 
 		word w;
@@ -32,8 +32,14 @@ struct core
 			byte h;
 		};
 
-		friend bool operator == (const Word& lhs, xxx::word rhs) { return lhs.w == rhs; }
-		friend bool operator == (xxx::word lhs, const Word& rhs) { return lhs == rhs.w; }
+		friend bool operator == (const Word& lhs, xxx::word rhs)
+		{
+			return lhs.w == rhs;
+		}
+		friend bool operator == (xxx::word lhs, const Word& rhs)
+		{
+			return lhs == rhs.w;
+		}
 	};
 
 	union Flag
@@ -51,8 +57,14 @@ struct core
 			bool n : 1;
 		};
 
-		friend bool operator == (const Flag& lhs, byte rhs) { return lhs.all == rhs; }
-		friend bool operator == (byte lhs, const Flag& rhs) { return lhs == rhs.all; }
+		friend bool operator == (const Flag& lhs, byte rhs)
+		{
+			return lhs.all == rhs;
+		}
+		friend bool operator == (byte lhs, const Flag& rhs)
+		{
+			return lhs == rhs.all;
+		}
 	};
 
 	core (_Host& host): host_ (host)
@@ -116,31 +128,41 @@ struct core
 		return data;
 	}
 
-	auto uc_upnz (byte value) 
-	{ 
-		p.n = (value &  0x80u); 
-		p.z = (value == 0x00u); 
+	auto uc_upnz (byte value)
+	{
+		p.n = (value & 0x80u);
+		p.z = (value == 0x00u);
 	}
 
 	auto uc_adc (Word tmp0)
 	{
 		Word tmp1;
-		tmp1.w = a + tmp0.w + p.c;				
+		tmp1.w = a + tmp0.w + p.c;
 		uc_upnz (tmp1.l);
 		p.v = ((a ^ tmp1.l) & (a ^ ~tmp0.l)) >> 7u;
 		p.c = tmp1.h;
 		a = tmp1.l;
 	}
 
+	auto uc_sbc (byte tmp0)
+	{
+		uc_adc(~tmp0);
+		p.c = !p.c;
+	}
+
 	auto uc_brcc (bool condition, Word addr)
 	{
-		if (condition) {			
-			if (pc.h != addr.h)
-				peek ((pc.l = addr.l, pc.w));
-			peek (pc.w = addr.w);	
+		if (!condition)
+			return;
+		if (pc.h != addr.h)
+		{
+			pc.l = addr.l;
+			peek (pc.w);
 		}
+		pc.w = addr.w;
+		peek (pc.w);
 	}
-	
+
 	void exec ()
 	{
 		using namespace bits;
@@ -164,15 +186,13 @@ struct core
 			Word addr { 0u };
 			byte tmp0 { 0u };
 			byte tmp1 { 0u };
-			byte offs { 0u };
-			
-			Word _tmp0, _tmp1 ;
+			word offs { 0u };
 
 			if (xchg (dma_, false))
 			{
 				addr.w = 0x100u * dpg_;
 				peek (addr.w);
-				if (ticks_elapsed() & 1u)
+				if (ticks_elapsed () & 1u)
 					peek (addr.w);
 				for (offs = 0u; offs < 0x100; ++offs)
 				{
@@ -517,7 +537,7 @@ struct core
 			case 0xF1:
 			case 0xF3:
 				tmp0 = peek (pc.w++);
-				addr.l = peek (tmp0 + 0u);				
+				addr.l = peek (tmp0 + 0u);
 				addr.h = peek ((tmp0 + 1u) & 0xff);
 				tmp0 = addr.h;
 				addr.w += y;
@@ -595,7 +615,7 @@ struct core
 			case 0xBD:
 				if (cxpg) peek (addr.w); //Dummy read
 				tmp0 = peek (addr.w);
-				uc_upnz(tmp0);
+				uc_upnz (tmp0);
 				a = tmp0;
 				break;
 
@@ -607,7 +627,7 @@ struct core
 			case 0xBE:
 				if (cxpg) peek (addr.w); //Dummy read
 				tmp0 = peek (addr.w);
-				uc_upnz(tmp0);
+				uc_upnz (tmp0);
 				x = tmp0;
 				break;
 
@@ -620,7 +640,7 @@ struct core
 			case 0xB3: // LAX (ab),Y        ;is crossed  5*
 				if (cxpg) peek (addr.w); //Dummy read
 				tmp0 = peek (addr.w);
-				uc_upnz(tmp0);
+				uc_upnz (tmp0);
 				x = tmp0;
 				a = tmp0;
 				break;
@@ -633,7 +653,7 @@ struct core
 			case 0xBC:
 				if (cxpg) peek (addr.w); //Dummy read
 				tmp0 = peek (addr.w);
-				uc_upnz(tmp0);
+				uc_upnz (tmp0);
 				y = tmp0;
 				break;
 
@@ -668,7 +688,7 @@ struct core
 			case 0x2C:
 				tmp0 = peek (addr.w);
 				p.z = !(tmp0 & a);
-				splice_mask_inplace<192>(p.all, tmp0);
+				splice_mask_inplace<192> (p.all, tmp0);
 				break;
 
 				// AND
@@ -682,7 +702,7 @@ struct core
 			case 0x3D:
 				tmp0 = peek (addr.w);
 				tmp0 = (a &= tmp0);
-				uc_upnz(tmp0);
+				uc_upnz (tmp0);
 				break;
 
 				// CMP
@@ -696,7 +716,7 @@ struct core
 			case 0xDD:
 				if (cxpg) peek (addr.w); //Dummy read
 				tmp0 = peek (addr.w);
-				uc_upnz(a - tmp0);
+				uc_upnz (a - tmp0);
 				p.c = (a >= tmp0);
 				break;
 
@@ -706,7 +726,7 @@ struct core
 			case 0xCC:
 				if (cxpg) peek (addr.w); //Dummy read
 				tmp0 = peek (addr.w);
-				uc_upnz(y - tmp0);
+				uc_upnz (y - tmp0);
 				p.c = (y >= tmp0);
 				break;
 
@@ -716,7 +736,7 @@ struct core
 			case 0xEC:
 				if (cxpg) peek (addr.w); //Dummy read
 				tmp0 = peek (addr.w);
-				uc_upnz(x - tmp0);
+				uc_upnz (x - tmp0);
 				p.c = (x >= tmp0);
 				break;
 
@@ -731,7 +751,7 @@ struct core
 			case 0x1D:
 				if (cxpg) peek (addr.w); //Dummy read
 				tmp0 = peek (addr.w);
-				uc_upnz(a |= tmp0);
+				uc_upnz (a |= tmp0);
 				break;
 
 				// EOR
@@ -745,7 +765,7 @@ struct core
 			case 0x51:
 				if (cxpg) peek (addr.w); // Dummy read
 				tmp0 = peek (addr.w);
-				uc_upnz(a ^= tmp0);
+				uc_upnz (a ^= tmp0);
 				break;
 
 				// ADC
@@ -772,10 +792,9 @@ struct core
 			case 0xF9:
 			case 0xFD:
 				if (cxpg) peek (addr.w); // Dummy read
-				uc_adc (~peek (addr.w));
-				p.c = !p.c;
+				uc_sbc (peek (addr.w));				
 				break;
-				
+
 			case 0x18: p.c = false; break; // CLC
 			case 0x38: p.c = true;	break; // SEC
 			case 0x58: p.i = false; break; // CLI
@@ -783,7 +802,7 @@ struct core
 			case 0xB8: p.v = false; break; // CLV
 			case 0xD8: p.d = false; break; // CLD
 			case 0xF8: p.d = true;	break; // SED
-			
+
 			case 0xB0: uc_brcc (+p.c, addr); break; // BCS				
 			case 0x90: uc_brcc (!p.c, addr); break; // BCC
 			case 0xF0: uc_brcc (+p.z, addr); break; // BEQ				
@@ -792,12 +811,12 @@ struct core
 			case 0x50: uc_brcc (!p.v, addr); break; // BVC				
 			case 0x30: uc_brcc (+p.n, addr); break; // BMI			
 			case 0x10: uc_brcc (!p.n, addr); break;	// BPL
-				
+
 			case 0xCA: uc_upnz (--x); break; // DEX
 			case 0x88: uc_upnz (--y); break; // DEY
 			case 0xE8: uc_upnz (++x); break; // INX				
 			case 0xC8: uc_upnz (++y); break; // INY
-			
+
 				// INC
 			case 0xFE:
 				peek (addr.w); // Dummy read
@@ -806,7 +825,7 @@ struct core
 			case 0xEE:
 				tmp0 = peek (addr.w);
 				poke (addr.w, tmp0); // Dummy write
-				uc_upnz(++tmp0);
+				uc_upnz (++tmp0);
 				poke (addr.w, tmp0);
 				break;
 
@@ -818,10 +837,10 @@ struct core
 			case 0xCE:
 				tmp0 = peek (addr.w);
 				poke (addr.w, tmp0); // Dummy write
-				uc_upnz(--tmp0);
+				uc_upnz (--tmp0);
 				poke (addr.w, tmp0);
 				break;
-			
+
 			case 0xAA: uc_upnz (x = a); break; // TAX				
 			case 0xA8: uc_upnz (y = a); break; // TAY				
 			case 0x8A: uc_upnz (a = x); break; // TXA				
@@ -831,44 +850,44 @@ struct core
 
 				// ASL A
 			case 0x0A:
-				p.c = a & 0x80u;				
-				uc_upnz(a <<= 1u);
+				p.c = a & 0x80u;
+				uc_upnz (a <<= 1u);
 				break;
 
 				// LSR A
 			case 0x4A:
 				p.c = a & 0x01u;
-				uc_upnz(a >>= 1u);
+				uc_upnz (a >>= 1u);
 				break;
 
 				// ROR A
 			case 0x6A:
 				tmp0 = p.c;
 				p.c = a & 0x01u;
-				uc_upnz(a = (a >> 1u) | (tmp0 << 7u));
+				uc_upnz (a = (a >> 1u) | (tmp0 << 7u));
 				break;
 
 				// ROL A
 			case 0x2A:
 				tmp0 = p.c;
-				p.c = a & 0x80u;				
-				uc_upnz(a = (a << 1u) | tmp0);
+				p.c = a & 0x80u;
+				uc_upnz (a = (a << 1u) | tmp0);
 				break;
 
 				// PHP
 			case 0x08:
-				uc_push(p.all | 0x10); // Set break to 1
+				uc_push (p.all | 0x10); // Set break to 1
 				break;
 
 				// PHA
 			case 0x48:
-				uc_push(a);
+				uc_push (a);
 				break;
 
 				// PLP
 			case 0x28:
 				peek (0x100 + s);
-				p.all = uc_pull();
+				p.all = uc_pull ();
 				p.b = 0;
 				p.e = 1;
 				break;
@@ -876,7 +895,7 @@ struct core
 				// PLA
 			case 0x68:
 				peek (0x100 + s);
-				uc_upnz(a = uc_pull());
+				uc_upnz (a = uc_pull ());
 				break;
 
 				// ASL
@@ -888,7 +907,7 @@ struct core
 				tmp0 = peek (addr.w);
 				poke (addr.w, tmp0); // Dummy write 
 				p.c = tmp0 & 0x80u;
-				uc_upnz(tmp0 <<= 1u);
+				uc_upnz (tmp0 <<= 1u);
 				poke (addr.w, tmp0);
 				break;
 
@@ -916,7 +935,7 @@ struct core
 				tmp1 = p.c;
 				p.c = tmp0 & 0x80u;
 				tmp0 = (tmp0 << 1u) | tmp1;
-				uc_upnz(tmp0);
+				uc_upnz (tmp0);
 				poke (addr.w, tmp0);
 				break;
 
@@ -948,7 +967,7 @@ struct core
 				tmp0 = peek (addr.w);			// Dummy read
 				tmp0 = peek (addr.w);
 				--tmp0;
-				uc_upnz(a - tmp0);
+				uc_upnz (a - tmp0);
 				p.c = a >= tmp0;
 				poke (addr.w, tmp0);
 				break;
@@ -973,8 +992,7 @@ struct core
 				tmp0 = peek (addr.w);
 				poke (addr.w, tmp0++);
 				poke (addr.w, tmp0);
-				uc_adc (~tmp0);
-				p.c = !p.c;
+				uc_sbc (tmp0);				
 				break;
 
 				// ASO/SLO
@@ -1006,7 +1024,7 @@ struct core
 				tmp0 = peek (addr.w);
 				p.c = tmp0 & 0x01u;
 				tmp0 >>= 1u;
-				poke (addr.w, tmp0);				
+				poke (addr.w, tmp0);
 				tmp0 = peek (addr.w);
 				uc_upnz (a ^= tmp0);
 				break;
@@ -1046,7 +1064,7 @@ struct core
 				tmp0 = peek (addr.w);
 				uc_adc (tmp0);
 				break;
-				
+
 			case 0xBB: // LAS
 				if (cxpg) peek (addr.w);
 				tmp0 = peek (addr.w); // Dummy read
@@ -1104,10 +1122,10 @@ private:
 
 public:
 
-	bool		nmi		{ false };
-	bool		rst		{ false };
-	bool		irq		{ false };
-	qword		clk		{ 0ull };
+	bool		nmi { false };
+	bool		rst { false };
+	bool		irq { false };
+	qword		clk { 0ull };
 
 	/// Registers
 
