@@ -6,45 +6,15 @@
 template <typename _Host>
 struct core
 {
-	using byte = xxx::byte;
-	using word = xxx::word;
+	using byte = types::byte;
+	using word = types::word;
+	using dword = types::dword;
+	using qword = types::qword;
+	using Word = types::Word;
 
-	using dword = xxx::dword;
-	using qword = xxx::qword;
-
-	union Word
+	union flags_type
 	{
-		Word (): Word (0)
-		{}
-
-		Word (word wv)
-			: w (wv)
-		{}
-
-		Word (byte lo, byte hi)
-			: l (lo), h (hi)
-		{}
-
-		word w;
-		struct
-		{
-			byte l;
-			byte h;
-		};
-
-		friend bool operator == (const Word& lhs, xxx::word rhs)
-		{
-			return lhs.w == rhs;
-		}
-		friend bool operator == (xxx::word lhs, const Word& rhs)
-		{
-			return lhs == rhs.w;
-		}
-	};
-
-	union Flag
-	{
-		byte all;
+		types::byte all;
 		struct
 		{
 			bool c : 1;
@@ -57,14 +27,8 @@ struct core
 			bool n : 1;
 		};
 
-		friend bool operator == (const Flag& lhs, byte rhs)
-		{
-			return lhs.all == rhs;
-		}
-		friend bool operator == (byte lhs, const Flag& rhs)
-		{
-			return lhs == rhs.all;
-		}
+		friend bool operator == (const flags_type& lhs, types::byte rhs) { return lhs.all == rhs; }
+		friend bool operator == (types::byte lhs, const flags_type& rhs) { return lhs == rhs.all; }
 	};
 
 	core (_Host& host): host_ (host)
@@ -93,7 +57,7 @@ struct core
 			host_.poke (addr, data);
 		else
 			dma_ = true,
-			dpg_ = data;
+			dma_page_ = data;
 		tick (1u);
 	}
 
@@ -146,7 +110,7 @@ struct core
 
 	auto uc_sbc (byte tmp0)
 	{
-		uc_adc(~tmp0);
+		uc_adc (~tmp0);
 		p.c = !p.c;
 	}
 
@@ -190,7 +154,7 @@ struct core
 
 			if (xchg (dma_, false))
 			{
-				addr.w = 0x100u * dpg_;
+				addr.w = 0x100u * dma_page_;
 				peek (addr.w);
 				if (ticks_elapsed () & 1u)
 					peek (addr.w);
@@ -792,7 +756,7 @@ struct core
 			case 0xF9:
 			case 0xFD:
 				if (cxpg) peek (addr.w); // Dummy read
-				uc_sbc (peek (addr.w));				
+				uc_sbc (peek (addr.w));
 				break;
 
 			case 0x18: p.c = false; break; // CLC
@@ -888,8 +852,8 @@ struct core
 			case 0x28:
 				peek (0x100 + s);
 				p.all = uc_pull ();
-				p.b = 0;
-				p.e = 1;
+				p.b = false;
+				p.e = true;
 				break;
 
 				// PLA
@@ -992,7 +956,7 @@ struct core
 				tmp0 = peek (addr.w);
 				poke (addr.w, tmp0++);
 				poke (addr.w, tmp0);
-				uc_sbc (tmp0);				
+				uc_sbc (tmp0);
 				break;
 
 				// ASO/SLO
@@ -1118,7 +1082,7 @@ private:
 	// Various
 
 	bool		dma_ { false };	// DMA Trigger
-	byte		dpg_ { 0u };  // DMA Page
+	byte		dma_page_ { 0u };  // DMA Page
 
 public:
 
@@ -1126,11 +1090,11 @@ public:
 	bool		rst { false };
 	bool		irq { false };
 	qword		clk { 0ull };
+	
+/// Registers
 
-	/// Registers
-
-	byte		a, x, y, s;
-	Word		pc;
-	Flag		p;
+	byte a, x, y, s;
+	Word pc;
+	flags_type p;
 
 };

@@ -14,13 +14,13 @@ namespace __bits_hidden__
 	constexpr auto pick_type()
 	{
 		if constexpr (_Size >  0u && _Size <=  8u)
-			return xxx::byte{_Value};
+			return types::byte{_Value};
 		if constexpr (_Size >  8u && _Size <= 16u)
-			return xxx::word{_Value};
+			return types::word{_Value};
 		if constexpr (_Size > 16u && _Size <= 32u)
-			return xxx::dword{_Value};
+			return types::dword{_Value};
 		if constexpr (_Size > 32u && _Size <= 64u)
-			return xxx::qword{_Value};
+			return types::qword{_Value};
 		static_assert(_Size > 0u, "Can't pick type bigger than smaller then 1bit");
 		static_assert(_Size <= 64u, "Can't pick type bigger than bigger then 64bits");
 	}
@@ -35,13 +35,13 @@ namespace __bits_hidden__
 	constexpr auto pick_negone()
 	{
 		if constexpr (_Size >  0u && _Size <=  8u)
-			return xxx::byte{0xff >> (8 - _Size)};
+			return types::byte{0xff >> (8 - _Size)};
 		if constexpr (_Size >  8u && _Size <= 16u)
-			return xxx::word{0xffff >> (16 - _Size)};
+			return types::word{0xffff >> (16 - _Size)};
 		if constexpr (_Size > 16u && _Size <= 32u)
-			return xxx::dword{0xfffffffful >> (32 - _Size)};
+			return types::dword{0xfffffffful >> (32 - _Size)};
 		if constexpr (_Size > 32u && _Size <= 64u)
-			return xxx::qword{0xffffffffffffffffull >> (64 - _Size)};
+			return types::qword{0xffffffffffffffffull >> (64 - _Size)};
 		static_assert(_Size > 0u, "Can't pick type bigger than smaller then 1bit");
 		static_assert(_Size <= 64u, "Can't pick type bigger than bigger then 64bits");
 	}

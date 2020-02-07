@@ -4,7 +4,7 @@
 
 namespace 
 {
-	const xxx::byte _test_rom [] =
+	const types::byte _test_rom [] =
 	{
 		0x4E, 0x45, 0x53, 0x1A, 
 		0x01, 0x01, 0x00, 0x00, 

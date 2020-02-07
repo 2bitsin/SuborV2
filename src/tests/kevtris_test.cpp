@@ -13,15 +13,13 @@
 #include <iostream>
 #include <algorithm>
 
-//#include "md5.hpp"
 
-
-struct fmc
+struct kevtris_test
 {
-	xxx::byte RAM [32_K];
-	xxx::byte ROM [32_K];
+	types::byte RAM [32_K];
+	types::byte ROM [32_K];
 
-	fmc ()
+	kevtris_test ()
 	: ricore (*this)
 	{
 		cartdata test;
@@ -41,7 +39,7 @@ struct fmc
 		return halt_;
 	}
 
-	auto peek (xxx::word addr, xxx::byte& data)
+	auto peek (types::word addr, types::byte& data)
 	{
 		if (addr >= 32_K)
 			data = ROM [addr - 32_K];
@@ -50,7 +48,7 @@ struct fmc
 		//std::printf ("    peek (0x%04X) -> 0x%02X\n", addr, data);
 	}
 
-	auto poke (xxx::word addr, xxx::byte data)
+	auto poke (types::word addr, types::byte data)
 	{
 		if (addr >= 32_K)
 			return;
@@ -78,7 +76,7 @@ struct fmc
 		return is_valid;
 	}
 
-	char* flags2str(std::string& buff, xxx::byte p)
+	char* flags2str(std::string& buff, types::byte p)
 	{
 		constexpr auto es = '.';
 		buff.clear();
@@ -142,22 +140,15 @@ struct fmc
 		}
 	}
 
-	core<fmc> ricore;
+	core<kevtris_test> ricore;
 	bool halt_ { true };
 };
 
-
-int main (int argc, char** argv, char** envp)
+int kevtris_nestest ()
 try
 {
-	const arguments cli { argc, argv, envp };
-
-	cartdata cd;
-	fmc _fmc;
-
-	_fmc.loop ();
-
-
+	kevtris_test the_test;
+	the_test.loop ();
 	return 0;
 }
 catch (const std::exception & ex)

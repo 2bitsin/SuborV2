@@ -1,14 +1,14 @@
 #include "cartdata.hpp"
 #include <src/data/nestest.hpp>
 
-using vector_of_byte = std::vector<xxx::byte>;
+using vector_of_byte = std::vector<types::byte>;
 
 void cartdata::load_ines (file_path_type pfile)
 {
 	load_vect (load_file(pfile));
 }
 
-void cartdata::load_vect (std::vector<xxx::byte> buff)
+void cartdata::load_vect (std::vector<types::byte> buff)
 {
 	cart_data_lock = std::move (buff);
 	auto& binary = std::any_cast<vector_of_byte&> (cart_data_lock);
@@ -21,14 +21,14 @@ void cartdata::load_test ()
 	_parse(_test_rom);	
 }
 
-void cartdata::load_span (span_type<const xxx::byte> buff)
+void cartdata::load_span (span_type<const types::byte> buff)
 {
 	cart_data_lock.reset();
 	_parse(buff);
 }
 
 
-void cartdata::_parse (span_type<const xxx::byte> inesrom)
+void cartdata::_parse (span_type<const types::byte> inesrom)
 {
 	bool is_valid = true;
 
@@ -69,11 +69,11 @@ void cartdata::_parse (span_type<const xxx::byte> inesrom)
 	chr_ram_size = header[5u] ? 0u : ((header[8] + 1u) * 8192u);
 	prg_ram_size = (header[6u] & 2u) ? 8192u : 0u;
 
-	xxx::dword prg_rom_size = header[4u] * 16384u;
-	xxx::dword chr_rom_size = header[5u] * 8192u;
-	xxx::dword trn_rom_size = (header[6u] & 4u) ? 512u : 0u;
+	types::dword prg_rom_size = header[4u] * 16384u;
+	types::dword chr_rom_size = header[5u] * 8192u;
+	types::dword trn_rom_size = (header[6u] & 4u) ? 512u : 0u;
 	
-	xxx::dword offset = 16u;
+	types::dword offset = 16u;
 
 	trn_rom_data = inesrom.subspan(offset, trn_rom_size);
 	offset += trn_rom_size;

@@ -5,10 +5,10 @@
 
 struct nestest_state
 {  
-	using byte = xxx::byte;
-	using word = xxx::word;
-	using dword = xxx::dword;
-	using qword = xxx::qword;
+	using byte = types::byte;
+	using word = types::word;
+	using dword = types::dword;
+	using qword = types::qword;
 
 	word pc;
 	struct 
