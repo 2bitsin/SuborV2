@@ -59,4 +59,4 @@ public:
 template 
 <	types::qword address_lo,
 	types::qword address_hi,
-	types::qword memory_len>
+	types::qword memory_len>`  
