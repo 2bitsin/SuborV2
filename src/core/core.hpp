@@ -3,6 +3,8 @@
 #include <src/etc/types.hpp>
 #include <src/etc/bits.hpp>
 
+#include <cassert>
+
 template <typename _Host>
 struct core
 {
@@ -56,7 +58,7 @@ struct core
 		if (addr != 0x4014u)
 			host_.poke (addr, data);
 		else
-			dma_ = true,
+			dma_flag_ = true,
 			dma_page_ = data;
 		tick (1u);
 	}
@@ -152,7 +154,7 @@ struct core
 			byte tmp1 { 0u };
 			word offs { 0u };
 
-			if (xchg (dma_, false))
+			if (xchg (dma_flag_, false))
 			{
 				addr.w = 0x100u * dma_page_;
 				peek (addr.w);
@@ -1081,7 +1083,7 @@ private:
 
 	// Various
 
-	bool		dma_ { false };	// DMA Trigger
+	bool		dma_flag_ { false };	// DMA Trigger
 	byte		dma_page_ { 0u };  // DMA Page
 
 public:

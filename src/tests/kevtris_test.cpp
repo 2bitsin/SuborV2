@@ -16,8 +16,8 @@
 
 struct kevtris_test
 {
-	types::byte RAM [32_K];
-	types::byte ROM [32_K];
+	types::byte RAM [32_k];
+	types::byte ROM [32_k];
 
 	kevtris_test ()
 	: ricore (*this)
@@ -27,10 +27,10 @@ struct kevtris_test
 		std::fill (std::begin (RAM), std::end (RAM), 0);
 		std::copy (test.prg_rom_data.begin (),
 			test.prg_rom_data.end (),
-			ROM + 00_K);
+			ROM + 00_k);
 		std::copy (test.prg_rom_data.begin (),
 			test.prg_rom_data.end (),
-			ROM + 16_K);
+			ROM + 16_k);
 	}
 
 	bool halt () 
@@ -41,8 +41,8 @@ struct kevtris_test
 
 	auto peek (types::word addr, types::byte& data)
 	{
-		if (addr >= 32_K)
-			data = ROM [addr - 32_K];
+		if (addr >= 32_k)
+			data = ROM [addr - 32_k];
 		else
 			data = RAM [addr];
 		//std::printf ("    peek (0x%04X) -> 0x%02X\n", addr, data);
@@ -50,7 +50,7 @@ struct kevtris_test
 
 	auto poke (types::word addr, types::byte data)
 	{
-		if (addr >= 32_K)
+		if (addr >= 32_k)
 			return;
 		RAM [addr] = data;
 		//std::printf ("    poke (0x%04X, 0x%02X)\n", addr, data);

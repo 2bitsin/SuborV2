@@ -156,12 +156,13 @@
   <ItemGroup>
     <ClCompile Include="src\cart\cartdata.cpp" />
     <ClCompile Include="src\console_main.cpp" />
+    <ClCompile Include="src\core\machine.hpp" />
     <ClCompile Include="src\etc\coro_w32.cpp" />
     <ClCompile Include="src\tests\kevtris_test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\core.hpp" />
-    <ClInclude Include="src\core\machine.hpp" />
+    <ClInclude Include="src\core\memory.hpp" />
     <ClInclude Include="src\data\nestest.hpp" />
     <ClCompile Include="src\data\nestest_log.cpp">
       <FileType>CppHeader</FileType>

@@ -6,19 +6,23 @@
 template <typename _Host>
 struct video
 {
+	using byte = types::byte;
+	using word = types::word;
+
 	video(_Host& host)
 	:	host_ { host }
 	{}
 
-	void exec ();
+	void exec () 
+	{}
 
-	void peek(word addr)
+	void peek(word addr, byte& data)
+	{}
+
+	void poke(word addr, byte data)
+	{}
 
 private:
-	_Host& host;
+	_Host& host_;
 };
 
-template <typename _Host>
-inline void video<_Host>::exec ()
-{
-}

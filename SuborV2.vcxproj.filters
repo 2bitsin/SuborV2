@@ -30,6 +30,9 @@
     <ClCompile Include="src\console_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\machine.hpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\etc\coro.hpp">
@@ -68,10 +71,10 @@
     <ClInclude Include="src\tests\kevtris_test.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\machine.hpp">
+    <ClInclude Include="src\video\video.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\video\video.hpp">
+    <ClInclude Include="src\core\memory.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
