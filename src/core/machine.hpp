@@ -23,6 +23,8 @@ struct machine
 	{}
 
 	core<machine> core_;
+	ram<2_k, 0, 8_k> sram_;
+
 	video<machine> video_;
-	
+	//ram<4_k, 2_k, 
 };

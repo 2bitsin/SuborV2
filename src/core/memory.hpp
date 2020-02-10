@@ -57,6 +57,21 @@ public:
 
 
 template 
-<	types::qword address_lo,
-	types::qword address_hi,
-	types::qword memory_len>`  
+<	types::qword memory_len,
+	types::qword address_lo,
+	types::qword address_hi>
+using ram = memory_base
+	<	memory_type::read_write, 
+		address_len, 
+		address_lo, 
+		address_hi>;
+
+template 
+<	types::qword memory_len,
+	types::qword address_lo,
+	types::qword address_hi>
+using rom = memory_base
+	<	memory_type::read_only, 
+		address_len, 
+		address_lo, 
+		address_hi>;
