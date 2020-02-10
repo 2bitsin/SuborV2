@@ -177,10 +177,12 @@ struct core
 
 			switch (next)
 			{
+		#if 1
 			case Instr_BRK:	// BRK
 			case Instr_IRQ:	// IRQ			
 			case Instr_NMI:	// NMI			
 			case Instr_RST:	// RST			
+		#endif
 				addr.w = Isrv [next & 0xFF];
 				p.b = (next == Instr_BRK);
 				p.i = (next == Instr_IRQ);
@@ -193,6 +195,7 @@ struct core
 				pc.h = peek (addr.w + 1u);
 				break;
 
+		#if 1
 			// Implied
 			case 0x40:
 			case 0x60:
@@ -228,9 +231,11 @@ struct core
 			case 0xDA:
 			case 0xEA:
 			case 0xFA:
+		#endif
 				peek (pc.w); // Dummy read
 				break;
 
+		#if 1				
 				// Immediate
 			case 0x02:
 			case 0x12:
@@ -268,9 +273,11 @@ struct core
 			case 0xA9:
 			case 0xE0:
 			case 0xE9:
+		#endif
 				addr.w = pc.w++;
 				break;
 
+		#if 1
 				// Zero Page
 			case 0x04:
 			case 0x05:
@@ -304,9 +311,11 @@ struct core
 			case 0xE5:
 			case 0xE6:
 			case 0xE7:
+		#endif
 				addr.w = peek (pc.w++);
 				break;
 
+		#if 1
 				// Zero Page, X
 			case 0x14:
 			case 0x15:
@@ -336,21 +345,25 @@ struct core
 			case 0xF5:
 			case 0xF6:
 			case 0xF7:
+		#endif
 				addr.w = peek (pc.w++);
 				addr.l += x;
 				peek (addr.w); // Dummy read
 				break;
 
+		#if 1
 				// Zero Page, Y
 			case 0x96:
 			case 0x97:
 			case 0xB6:
 			case 0xB7:
+		#endif
 				addr.w = peek (pc.w++);
 				addr.l += y;
 				peek (addr.w); // Dummy read
 				break;
 
+		#if 1
 				// Absolute
 			case 0x0C:
 			case 0x0D:
@@ -384,10 +397,12 @@ struct core
 			case 0xED:
 			case 0xEE:
 			case 0xEF:
+		#endif
 				addr.l = peek (pc.w++);
 				addr.h = peek (pc.w++);
 				break;
 
+		#if 1
 				// Absolute, X
 			case 0x1C:
 			case 0x1D:
@@ -417,6 +432,7 @@ struct core
 			case 0xFD:
 			case 0xFE:
 			case 0xFF:
+		#endif
 				addr.l = peek (pc.w++);
 				addr.h = peek (pc.w++);
 				tmp0 = addr.h;
@@ -424,6 +440,7 @@ struct core
 				cxpg = addr.h != tmp0;
 				break;
 
+		#if 1
 				// Absolute, Y
 			case 0x19:
 			case 0x1B:
@@ -445,6 +462,7 @@ struct core
 			case 0xDB:
 			case 0xF9:
 			case 0xFB:
+		#endif
 				addr.l = peek (pc.w++);
 				addr.h = peek (pc.w++);
 				tmp0 = addr.h;
@@ -462,6 +480,7 @@ struct core
 				addr.l = tmp0;
 				break;
 
+		#if 1
 				// (Indirect, X)
 			case 0x01:
 			case 0x03:
@@ -479,12 +498,14 @@ struct core
 			case 0xC3:
 			case 0xE1:
 			case 0xE3:
+		#endif
 				tmp0 = peek (pc.w++) + x;
 				peek (tmp0);							// Dummy read
 				addr.l = peek (tmp0);
 				addr.h = peek (++tmp0);
 				break;
 
+		#if 1
 				// (Indirect), Y
 			case 0x11:
 			case 0x13:
@@ -502,9 +523,10 @@ struct core
 			case 0xD3:
 			case 0xF1:
 			case 0xF3:
+		#endif
 				tmp0 = peek (pc.w++);
-				addr.l = peek (tmp0 + 0u);
-				addr.h = peek ((tmp0 + 1u) & 0xff);
+				addr.l = peek (tmp0);
+				addr.h = peek (++tmp0);
 				tmp0 = addr.h;
 				addr.w += y;
 				cxpg = addr.h != tmp0;

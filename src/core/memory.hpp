@@ -24,6 +24,7 @@ class memory_base
 	using word = types::word;
 	using byte = types::byte;
 
+
 	template <access_type _Direction>
 	using data_type = std::conditional_t
 		<	_Direction == access_type::read,
@@ -35,6 +36,12 @@ public:
 	static inline constexpr auto address_hi = _AddressHi;	
 	static inline constexpr auto length = _MemoryLen;
 	static inline constexpr auto is_read_only = _MemoryType == memory_type::read_only;
+
+	template <typename _Host>
+	memory_base(_Host& host_)
+	{}
+
+	memory_base(const memory_base&) = default;
 
 	template <access_type _Access>
 	auto cycle(word address, data_type<_Access> data)
@@ -62,7 +69,7 @@ template
 	types::qword address_hi>
 using ram = memory_base
 	<	memory_type::read_write, 
-		address_len, 
+		memory_len, 
 		address_lo, 
 		address_hi>;
 
@@ -72,6 +79,6 @@ template
 	types::qword address_hi>
 using rom = memory_base
 	<	memory_type::read_only, 
-		address_len, 
+		memory_len, 
 		address_lo, 
 		address_hi>;

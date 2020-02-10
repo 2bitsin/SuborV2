@@ -22,9 +22,11 @@ struct machine
 	void tick (int)
 	{}
 
-	core<machine> core_;
-	ram<2_k, 0, 8_k> sram_;
+	core  <machine>						core_		{ *this };
+	video <machine>						video_	{ *this };
+	ram   < 2_k,  0_k,  8_k>	sram_   { *this };
+	ram   < 4_k,  8_k, 16_k>	vram_   { *this }; 
+	rom		<32_k, 32_k, 64_k>	prgr_		{ *this };
+	rom		< 8_k,  0_k,  8_k>	chrr_		{ *this };
 
-	video<machine> video_;
-	//ram<4_k, 2_k, 
 };
